@@ -1,0 +1,11 @@
+{
+  "objects": [
+    { "id": "raiz-1", "label": "Raíz 1", "isRoot": true, "position": { "x": 100, "y": 200 } },
+    { "id": "obj-b", "label": "Objeto B", "isRoot": false, "position": { "x": 300, "y": 200 } },
+    { "id": "obj-c", "label": "Objeto C", "isRoot": false, "position": { "x": 500, "y": 200 } }
+  ],
+  "references": [
+    { "id": "ref-raiz-b", "sourceObjectId": "raiz-1", "targetObjectId": "obj-b" },
+    { "id": "ref-b-c", "sourceObjectId": "obj-b", "targetObjectId": "obj-c" }
+  ]
+}

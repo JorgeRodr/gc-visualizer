@@ -1,0 +1,10 @@
+{
+  "objects": [
+    { "id": "obj-a", "label": "Objeto A", "isRoot": false, "position": { "x": 150, "y": 200 } },
+    { "id": "obj-b", "label": "Objeto B", "isRoot": false, "position": { "x": 400, "y": 200 } },
+    { "id": "obj-c", "label": "Objeto C", "isRoot": false, "position": { "x": 650, "y": 200 } }
+  ],
+  "references": [
+    { "id": "ref-a-b", "sourceObjectId": "obj-a", "targetObjectId": "obj-b" }
+  ]
+}
