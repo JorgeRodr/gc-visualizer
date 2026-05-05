@@ -1,0 +1,13 @@
+{
+  "objects": [
+    { "id": "raiz-1", "label": "Raíz 1", "isRoot": true, "position": { "x": 100, "y": 150 } },
+    { "id": "obj-b", "label": "Objeto B", "isRoot": false, "position": { "x": 350, "y": 150 } },
+    { "id": "raiz-2", "label": "Raíz 2", "isRoot": true, "position": { "x": 100, "y": 350 } },
+    { "id": "obj-d", "label": "Objeto D", "isRoot": false, "position": { "x": 350, "y": 350 } },
+    { "id": "obj-e", "label": "Objeto E", "isRoot": false, "position": { "x": 600, "y": 250 } }
+  ],
+  "references": [
+    { "id": "ref-raiz1-b", "sourceObjectId": "raiz-1", "targetObjectId": "obj-b" },
+    { "id": "ref-raiz2-d", "sourceObjectId": "raiz-2", "targetObjectId": "obj-d" }
+  ]
+}
