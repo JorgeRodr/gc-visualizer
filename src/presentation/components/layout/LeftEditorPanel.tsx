@@ -4,6 +4,10 @@ import { deleteObject } from "../../../application/useCases/deleteObject";
 import { deleteReference } from "../../../application/useCases/deleteReference";
 import { markAsRoot } from "../../../application/useCases/markAsRoot";
 import { TOAST_TEXT, notify } from "../../notifications/notifications";
+import {
+  findFreePosition,
+  useVisibleFlowBoundsGetter,
+} from "../../utils/findFreePosition";
 
 export function LeftEditorPanel() {
   const objects = useSimulationStore((s) => s.graph.objects);
@@ -19,11 +23,16 @@ export function LeftEditorPanel() {
   const connectionModeActive = useSimulationStore(
     (s) => s.connectionMode.active,
   );
+  const getVisibleBounds = useVisibleFlowBoundsGetter();
 
   const isSimulationActive = phase !== "idle";
 
   const handleCreateObject = () => {
-    const obj = createObject();
+    const position = findFreePosition(
+      objects.map((o) => o.position),
+      getVisibleBounds(),
+    );
+    const obj = createObject({ position });
     setSelectedElement(obj.id);
   };
 
