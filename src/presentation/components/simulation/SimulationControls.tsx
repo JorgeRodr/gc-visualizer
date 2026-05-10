@@ -90,7 +90,11 @@ export function SimulationControls() {
   const atLastStep = hasSteps && currentStep >= steps.length - 1;
   const atFirstStep = !hasSteps || currentStep <= 0;
 
-  const canPlay = !running && !atLastStep;
+  // canPlay alignment with UI_SPEC §8 / Plan §6.2:
+  //   idle ✓, running ✗, paused ✓ (acts as "Reanudar" per RF-11 and TC-E-08
+  //   step 5 — the spec table itself does not list a separate Reanudar button),
+  //   done ✓ (handlePlay resets first and starts over).
+  const canPlay = !running;
   const canPause = running;
   const canStepBackward = !running && hasSteps && !atFirstStep;
   const canStepForward = !running && !atLastStep;
