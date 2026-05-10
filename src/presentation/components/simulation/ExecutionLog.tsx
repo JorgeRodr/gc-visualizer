@@ -48,7 +48,7 @@ export function ExecutionLog() {
     <div
       data-testid="execution-log"
       ref={containerRef}
-      className="px-4 pb-3 max-h-32 overflow-y-auto text-xs font-mono text-gray-700 bg-gray-50 border-t border-gray-100"
+      className="px-4 pb-3 h-32 overflow-y-auto text-xs font-mono text-gray-700 bg-gray-50 border-t border-gray-100"
     >
       {entries.length === 0 ? (
         <p className="italic text-gray-400 py-2">Registro de ejecución vacío.</p>
