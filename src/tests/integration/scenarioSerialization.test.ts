@@ -104,4 +104,71 @@ describe("scenario serialization", () => {
     expect(graph.references.length).toBe(1);
     expect(graph.objects.find((o) => o.id === a.id)?.isRoot).toBe(true);
   });
+
+  test("export includes handle anchors when present on a reference", () => {
+    const a = createObject({ label: "A", isRoot: true });
+    const b = createObject({ label: "B" });
+    createReference(a.id, b.id, { source: "right", target: "left" });
+
+    const json = exportScenario();
+    const parsed = JSON.parse(json) as {
+      references: Array<{
+        id: string;
+        sourceObjectId: string;
+        targetObjectId: string;
+        sourceHandle?: string;
+        targetHandle?: string;
+      }>;
+    };
+
+    expect(parsed.references[0].sourceHandle).toBe("right");
+    expect(parsed.references[0].targetHandle).toBe("left");
+  });
+
+  test("export omits handle keys when a reference has none (clean JSON)", () => {
+    const a = createObject({ label: "A", isRoot: true });
+    const b = createObject({ label: "B" });
+    createReference(a.id, b.id);
+
+    const json = exportScenario();
+    const parsed = JSON.parse(json) as {
+      references: Array<Record<string, unknown>>;
+    };
+
+    expect(parsed.references[0]).not.toHaveProperty("sourceHandle");
+    expect(parsed.references[0]).not.toHaveProperty("targetHandle");
+  });
+
+  test("round-trip preserves handle anchors", () => {
+    const a = createObject({ label: "A", isRoot: true });
+    const b = createObject({ label: "B" });
+    createReference(a.id, b.id, { source: "right", target: "left" });
+
+    const json = exportScenario();
+    useSimulationStore.getState().reset();
+    importScenario(json);
+
+    const ref = useSimulationStore.getState().graph.references[0];
+    expect(ref.sourceHandle).toBe("right");
+    expect(ref.targetHandle).toBe("left");
+  });
+
+  test("import accepts JSON without handles (predefined-scenario style)", () => {
+    const json = JSON.stringify({
+      objects: [
+        { id: "A", label: "A", isRoot: true, position: { x: 0, y: 0 } },
+        { id: "B", label: "B", isRoot: false, position: { x: 100, y: 0 } },
+      ],
+      references: [
+        { id: "r1", sourceObjectId: "A", targetObjectId: "B" },
+      ],
+    });
+
+    const result = importScenario(json);
+    expect(result.imported).toBe(true);
+
+    const ref = useSimulationStore.getState().graph.references[0];
+    expect(ref.sourceHandle).toBeUndefined();
+    expect(ref.targetHandle).toBeUndefined();
+  });
 });

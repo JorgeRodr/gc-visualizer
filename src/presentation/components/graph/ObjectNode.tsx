@@ -114,21 +114,22 @@ export function ObjectNode({ id, data, selected }: NodeProps<ObjectNodeType>) {
         <span className="block text-[10px] mt-0.5 italic">Recolectado</span>
       )}
 
+      {/*
+        Side anchors: with ConnectionMode.Loose each handle works as both
+        source and target. The `type` declarations align with the button-mode
+        convention (right=source, left=target) but do not constrain drag.
+      */}
       <Handle
+        id="left"
+        type="target"
+        position={Position.Left}
+        className="!w-2 !h-2 !bg-gray-400 !border-0"
+      />
+      <Handle
+        id="right"
         type="source"
-        position={Position.Bottom}
-        style={{
-          width: "100%",
-          height: "100%",
-          top: 0,
-          left: 0,
-          transform: "none",
-          background: "transparent",
-          border: 0,
-          borderRadius: 0,
-          opacity: 0,
-          pointerEvents: "all",
-        }}
+        position={Position.Right}
+        className="!w-2 !h-2 !bg-gray-400 !border-0"
       />
     </div>
   );

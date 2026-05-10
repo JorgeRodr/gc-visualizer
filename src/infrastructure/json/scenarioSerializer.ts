@@ -17,6 +17,8 @@ interface SerializedReference {
   id: string;
   sourceObjectId: string;
   targetObjectId: string;
+  sourceHandle?: string;
+  targetHandle?: string;
 }
 
 interface SerializedGraph {
@@ -28,7 +30,9 @@ interface SerializedGraph {
  * JSON serializer for scenarios.
  *
  * Per UI_SPEC §11, the serialized form excludes simulation-only fields
- * (`marked`, `alive`, `visitedOrder`, `traversed`).
+ * (`marked`, `alive`, `visitedOrder`, `traversed`). Optional handle anchors
+ * are preserved so user-exported scenarios round-trip with the same visual
+ * layout, but absent from the JSON when the reference has no handle set.
  */
 export const scenarioSerializer: IScenarioSerializer = {
   serialize(graph: MemoryGraph): string {
@@ -39,11 +43,16 @@ export const scenarioSerializer: IScenarioSerializer = {
         isRoot: o.isRoot,
         position: o.position,
       })),
-      references: graph.references.map((r) => ({
-        id: r.id,
-        sourceObjectId: r.sourceObjectId,
-        targetObjectId: r.targetObjectId,
-      })),
+      references: graph.references.map((r) => {
+        const ref: SerializedReference = {
+          id: r.id,
+          sourceObjectId: r.sourceObjectId,
+          targetObjectId: r.targetObjectId,
+        };
+        if (r.sourceHandle != null) ref.sourceHandle = r.sourceHandle;
+        if (r.targetHandle != null) ref.targetHandle = r.targetHandle;
+        return ref;
+      }),
     };
     return JSON.stringify(minimal, null, 2);
   },
@@ -58,7 +67,10 @@ export const scenarioSerializer: IScenarioSerializer = {
         }),
       ),
       references: parsed.references.map((r) =>
-        createMemoryReference(r.id, r.sourceObjectId, r.targetObjectId),
+        createMemoryReference(r.id, r.sourceObjectId, r.targetObjectId, {
+          sourceHandle: r.sourceHandle,
+          targetHandle: r.targetHandle,
+        }),
       ),
     };
   },

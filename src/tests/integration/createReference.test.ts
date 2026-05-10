@@ -36,4 +36,35 @@ describe("createReference use case", () => {
     const { graph } = useSimulationStore.getState();
     expect(graph.references.length).toBe(0);
   });
+
+  test("createReference persists optional source/target handle anchors", () => {
+    const a = createObject({ label: "A" });
+    const b = createObject({ label: "B" });
+
+    const result = createReference(a.id, b.id, {
+      source: "right",
+      target: "left",
+    });
+    expect(result.created).toBe(true);
+
+    const ref = useSimulationStore
+      .getState()
+      .graph.references.find((r) => r.id === result.referenceId);
+    expect(ref?.sourceHandle).toBe("right");
+    expect(ref?.targetHandle).toBe("left");
+  });
+
+  test("createReference defaults to no handles when not provided", () => {
+    const a = createObject({ label: "A" });
+    const b = createObject({ label: "B" });
+
+    const result = createReference(a.id, b.id);
+    expect(result.created).toBe(true);
+
+    const ref = useSimulationStore
+      .getState()
+      .graph.references.find((r) => r.id === result.referenceId);
+    expect(ref?.sourceHandle).toBeUndefined();
+    expect(ref?.targetHandle).toBeUndefined();
+  });
 });
