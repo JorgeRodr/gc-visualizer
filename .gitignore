@@ -34,3 +34,6 @@ cypress/downloads
 
 # Claude Code workspace settings
 .claude
+
+#Obsidian
+docs/.obsidian/
