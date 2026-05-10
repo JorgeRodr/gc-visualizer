@@ -125,6 +125,8 @@ export function GraphCanvas() {
         id: r.id,
         source: r.sourceObjectId,
         target: r.targetObjectId,
+        sourceHandle: r.sourceHandle ?? undefined,
+        targetHandle: r.targetHandle ?? undefined,
         type: "reference" as const,
         selected: selectedElementId === r.id,
         data: { traversed: r.traversed } satisfies ReferenceEdgeData,
@@ -162,17 +164,25 @@ export function GraphCanvas() {
     [],
   );
 
-  const onConnect: OnConnect = useCallback(({ source, target }) => {
-    if (!source || !target) return;
-    const result = createReference(source, target);
-    if (!result.created) {
-      if (result.reason === "duplicate") {
-        notify.error(TOAST_TEXT.duplicateReference);
-      } else if (result.reason === "simulation-active") {
-        notify.error(TOAST_TEXT.createReferenceDuringSimulation);
+  const onConnect: OnConnect = useCallback(
+    ({ source, target, sourceHandle, targetHandle }) => {
+      if (!source || !target) return;
+      // Drag mode: ReactFlow resolves the closest handle; persist the user's
+      // choice so the edge stays anchored to the same side on re-render.
+      const result = createReference(source, target, {
+        source: sourceHandle,
+        target: targetHandle,
+      });
+      if (!result.created) {
+        if (result.reason === "duplicate") {
+          notify.error(TOAST_TEXT.duplicateReference);
+        } else if (result.reason === "simulation-active") {
+          notify.error(TOAST_TEXT.createReferenceDuringSimulation);
+        }
       }
-    }
-  }, []);
+    },
+    [],
+  );
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
@@ -181,7 +191,12 @@ export function GraphCanvas() {
           selectConnectionSource(node.id);
           return;
         }
-        const result = createReference(connectionMode.sourceId, node.id);
+        // Button mode (sequential click): right side acts as source, left as
+        // target by spec. Drag mode is the place where the user chooses sides.
+        const result = createReference(connectionMode.sourceId, node.id, {
+          source: "right",
+          target: "left",
+        });
         if (!result.created) {
           if (result.reason === "duplicate") {
             notify.error(TOAST_TEXT.duplicateReference);

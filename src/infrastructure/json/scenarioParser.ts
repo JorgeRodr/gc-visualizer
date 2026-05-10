@@ -94,7 +94,16 @@ export const scenarioParser: IScenarioParser = {
           "Una referencia no tiene los campos 'id', 'sourceObjectId' y 'targetObjectId'",
         ]);
       }
-      references.push(createMemoryReference(id, src, tgt));
+      const sourceHandleRaw = rawRef["sourceHandle"];
+      const targetHandleRaw = rawRef["targetHandle"];
+      references.push(
+        createMemoryReference(id, src, tgt, {
+          sourceHandle:
+            typeof sourceHandleRaw === "string" ? sourceHandleRaw : undefined,
+          targetHandle:
+            typeof targetHandleRaw === "string" ? targetHandleRaw : undefined,
+        }),
+      );
     }
 
     const graph: MemoryGraph = { objects, references };
