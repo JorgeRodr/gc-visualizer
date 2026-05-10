@@ -9,6 +9,7 @@
 | 1.1 | 04/05/2026 | Correcciones derivadas del informe VAL-SDD-v1.0 (H-01 a H-08). Actualización de secciones 3.2.3, 3.3, 4.5, 5.1, 5.2, 6.1, 7 y 9. | — |
 | 1.2 | 04/05/2026 | Correcciones derivadas del informe VAL2-SDD-v1.1 (H2-01 a H2-04). Actualización de secciones 5.2, 6, 7.1 y 8. | — |
 | 1.3 | 05/05/2026 | Segunda versión. Actualización derivada de SRS v1.4 y UCD v1.4. Eliminadas referencias académicas. Sección 7.4 actualizada: onNodesChange, ConnectionMode.Loose, doble clic, setInterval/delay real, RF-26. Trazabilidad sección 9 actualizada con RF-26 y nuevos elementos de diseño. | — |
+| 1.4 | 10/05/2026 | Ajustes derivados de la sesión de bugfix/mejoras. §3.2.2: MemoryReference añade `sourceHandle?` y `targetHandle?`. §7.4 RI-07: reescrito el modelo de creación de referencias (handles laterales + dragHandle + connectOnClick=false). §7.5 nueva: notas de presentación (drag handle dedicado, clase `nopan`, `<ReactFlowProvider>`, `findFreePosition`). §9: actualizada la fila de RF-04 y añadidas filas para RF-16 y para los nuevos casos de uso de presentación. | — |
 
 
 ## 1. Introducción
@@ -140,7 +141,9 @@ Representa una referencia dirigida entre dos objetos de memoria.
 
 Responsabilidad: Modelar una arista dirigida del grafo con su origen, destino y estado de recorrido durante el marcado.
 
-Atributos: id: string — identificador único. sourceObjectId: string — identificador del objeto origen. targetObjectId: string — identificador del objeto destino. traversed: boolean — si la referencia fue recorrida durante la fase Mark.
+Atributos: id: string — identificador único. sourceObjectId: string — identificador del objeto origen. targetObjectId: string — identificador del objeto destino. traversed: boolean — si la referencia fue recorrida durante la fase Mark. sourceHandle?: string \| null — handle de anclaje en el nodo origen (`"left"` \| `"right"`). targetHandle?: string \| null — handle de anclaje en el nodo destino (`"left"` \| `"right"`).
+
+Los campos `sourceHandle` y `targetHandle` son metadatos visuales utilizados solo por la capa de presentación; el algoritmo Mark & Sweep los ignora. Se persisten para que el anclaje lateral elegido por el usuario al crear la referencia (por proximidad en arrastre o por la regla right→left del modo botón) se mantenga al re-renderizar y al hacer round-trip del JSON.
 
 
 #### 3.2.3 MemoryGraph
@@ -398,10 +401,21 @@ Los siguientes requisitos de interfaz del SRS se satisfacen mediante los mecanis
 
 | RI | Requisito | Cómo se satisface |
 | --- | --- | --- |
-| RI-07 | Selección y creación de referencias | React Flow gestiona la selección de nodos y aristas mediante clic simple (onNodeClick, onEdgeClick). La creación de referencias por arrastre se implementa con ConnectionMode.Loose, que permite iniciar una conexión desde cualquier punto del nodo (no solo desde handles fijos). El cursor cambia a crosshair al pasar sobre un nodo. La edición de etiqueta se implementa con onNodeDoubleClick, que activa un input inline sobre el nodo. El evento onNodesChange debe estar conectado al store para que los cambios de posición persistan al re-renderizar. |
+| RI-07 | Selección y creación de referencias | React Flow gestiona la selección de nodos y aristas mediante clic simple (onNodeClick, onEdgeClick). La creación de referencias por arrastre se implementa con ConnectionMode.Loose y dos handles laterales por nodo (id `"left"` Position.Left, id `"right"` Position.Right): cualquiera de los dos sirve como origen o destino y ReactFlow resuelve el lado por proximidad al cursor durante el drop. La prop `connectOnClick={false}` evita que un clic sobre un handle inicie conexión. La creación por botón hardcodea source=right, target=left. El movimiento del nodo está restringido a una franja superior con clase `object-node-drag-handle` (configurada como `dragHandle` del nodo). La edición de etiqueta se implementa con onNodeDoubleClick, que activa un input inline sobre el nodo. El evento onNodesChange debe estar conectado al store para que los cambios de posición persistan al re-renderizar. El div raíz del nodo lleva la clase `nopan` para que clic y doble clic alcancen el wrapper también cuando ReactFlow desactiva la clase auto-añadida (caso `nodesDraggable=false` durante simulación). |
 | RI-08 | Evitar saturación visual | React Flow proporciona zoom, paneo y layout automático. El diseño de componentes utiliza espaciado y tamaños mínimos definidos en Tailwind CSS para mantener la legibilidad con grafos de hasta 50 objetos. |
 | RI-09 | Fase actual siempre visible | BottomSimulationPanel.tsx muestra en todo momento la fase actual de la simulación (idle, mark, sweep, done) mediante un indicador de estado prominente que refleja el atributo phase del store. |
 | RI-10 | Feedback inmediato y notificaciones | El store centralizado garantiza que cualquier cambio de estado se propaga reactivamente a todos los componentes suscritos. El sistema de notificaciones (RF-26) se implementa mediante una librería de toasts (react-hot-toast o sonner) invocada desde los casos de uso de aplicación cuando se producen errores, bloqueos o confirmaciones. El diálogo de confirmación para ejecución sin raíces se implementa como un componente modal independiente. |
+
+
+### 7.5 Decisiones de presentación adicionales
+
+Estas decisiones quedan registradas explícitamente porque dependen de detalles del runtime de ReactFlow v12 y son fáciles de regresionar:
+
+- **`<ReactFlowProvider>`**: la raíz `App` envuelve `AppLayout` con `<ReactFlowProvider>` para que `useReactFlow()` esté disponible en componentes fuera del propio `<ReactFlow>`. Lo necesita el botón "Crear objeto" para llamar a `screenToFlowPosition` y calcular una posición libre dentro del viewport actual (utilidad `findFreePosition` + hook `useVisibleFlowBoundsGetter`).
+- **`findFreePosition`**: utilidad pura que recibe los bounds del viewport en coordenadas de flow y las posiciones ocupadas, y devuelve una posición aleatoria sin solapamiento con los nodos existentes. Si no encuentra hueco aleatorio en N intentos cae a un escaneo de rejilla. Vive en `presentation/utils/findFreePosition.ts`.
+- **`connectOnClick={false}`**: deshabilita el modo de conexión por clic interno de ReactFlow, que entraría en conflicto con la regla del SRS (RF-04) según la cual el modo conexión por clic secuencial solo se activa con el botón "Crear referencia".
+- **Clase `nopan` en cada nodo**: el wrapper `react-flow__node` añade automáticamente `nopan` solo cuando el nodo es arrastrable. Cuando `nodesDraggable=false` (durante simulación) la clase desaparece y la zona del nodo entra en el sistema de pan/zoom, lo que en ciertos navegadores absorbe el evento `dblclick` antes de que llegue al wrapper. Forzar `nopan` en el div raíz del nodo evita esa interferencia.
+- **Filtrado de la vista tras recolección (RF-16)**: el toggle se mantiene en `simulationState.showCollectedView` y el filtrado se hace en `GraphCanvas` justo antes de pasar `nodes` y `edges` a ReactFlow (`useMemo`). El estado `localNodes` no se modifica, de modo que las posiciones se conservan al alternar la vista.
 
 
 ## 8. Requisitos técnicos de arquitectura
@@ -441,7 +455,10 @@ La siguiente tabla relaciona los elementos de diseño principales con los requis
 | loadPredefinedScenario.ts | application/useCases/ | RF-18 |
 | clearScenario.ts | application/useCases/ | RF-17 |
 | GraphCanvas.tsx (onNodesChange) | presentation/ | RF-03 — persiste posición de nodos al re-renderizar |
-| GraphCanvas.tsx (ConnectionMode.Loose) | presentation/ | RF-04 — nodo completo como handle de conexión |
+| GraphCanvas.tsx (ConnectionMode.Loose, connectOnClick=false) | presentation/ | RF-04 — handles laterales (left/right) como puntos de anclaje, source/target intercambiables |
+| ObjectNode.tsx (handles left/right + dragHandle + nopan) | presentation/ | RF-04, RF-03 — anclaje lateral persistido en la referencia, drag dedicado, dblclick robusto |
+| GraphCanvas.tsx (visibleNodes/visibleEdges memo + btn-vista-recoleccion) | presentation/ | RF-16 — filtrado de nodos `alive=false` y aristas asociadas al alternar la vista tras recolección |
+| presentation/utils/findFreePosition.ts (+ useVisibleFlowBoundsGetter) | presentation/ | RF-01 — posicionamiento sin solapamiento dentro del viewport visible al crear objetos |
 | GraphCanvas.tsx, ObjectNode.tsx | presentation/ | RF-07, RF-10, RF-13, RF-16, RF-20 |
 | ObjectNode.tsx (onNodeDoubleClick) | presentation/ | RF-03 — edición inline de etiqueta |
 | SimulationControls.tsx (setInterval) | presentation/ | RF-11 — delay real entre pasos, slider 1x-10x |

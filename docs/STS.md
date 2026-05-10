@@ -9,6 +9,7 @@
 | 1.1 | 04/05/2026 | Correcciones VAL-STS-v1.0 (H-01 a H-07). Añadidos TC-U-14, TC-E-16, TC-E-17. Total: 41 casos. | — |
 | 1.2 | 04/05/2026 | Correcciones VAL2-STS-v1.1 (H2-01 a H2-04). Actualizada matriz RF-09, TC-E-02, TC-E-04, TC-E-11. | — |
 | 1.3 | 05/05/2026 | Segunda versión. Derivada de SRS v1.4. Eliminadas referencias académicas. TC-E-02 ampliado (toast texto exacto, RF-26). TC-E-04 ampliado (dos métodos, RF-04). TC-E-05 ampliado (clic arista, Delete). TC-E-08 ampliado (slider velocidad). Añadidos TC-E-18, TC-E-19 (RF-04), TC-E-20 (RF-05), TC-E-21 (RF-10). RF-26 añadido a matriz. Total: 45 casos de prueba. | — |
+| 1.4 | 10/05/2026 | Derivada de SRS v1.5 y UI_SPEC v2.2. Añadidos TC-U-15..21 (findFreePosition), TC-U-22..24 (factory MemoryReference con handles), TC-I-11..12 (createReference con handles), TC-I-13..16 (export/import con handles), TC-I-17..18 (runSimulation con grafo vacío), TC-E-22..27 (E2E pendientes de implementar — ver TEST_IMPLEMENTATION_PLAN.md). Total: 67 casos de prueba (61 implementados + 6 pendientes). | — |
 
 
 ## 1. Introducción
@@ -51,22 +52,22 @@ La siguiente tabla muestra la cobertura de los requisitos funcionales del SRS v1
 
 | RF | Nombre | Casos de prueba |
 | --- | --- | --- |
-| RF-01 | Representación de objetos | TC-U-01, TC-I-01, TC-E-01 |
+| RF-01 | Representación de objetos | TC-U-01, TC-I-01, TC-E-01, TC-U-15, TC-U-16, TC-U-17, TC-U-18, TC-U-19, TC-U-20, TC-U-21 (apoyo de UX: posicionamiento sin solape) |
 | RF-02 | Eliminación de objetos | TC-U-02, TC-E-02, TC-E-16 |
-| RF-03 | Edición de objetos | TC-E-03 |
-| RF-04 | Representación de referencias | TC-U-03, TC-U-14, TC-I-02, TC-E-04, TC-E-18, TC-E-19 |
+| RF-03 | Edición de objetos | TC-E-03, TC-E-24 |
+| RF-04 | Representación de referencias | TC-U-03, TC-U-14, TC-I-02, TC-E-04, TC-E-18, TC-E-19, TC-U-22, TC-U-23, TC-U-24, TC-I-11, TC-I-12, TC-E-25, TC-E-26, TC-E-27 |
 | RF-05 | Eliminación de referencias | TC-E-05, TC-E-20 |
 | RF-06 | Gestión de raíces | TC-U-04, TC-E-06 |
 | RF-07 | Visualización del grafo | TC-E-01, TC-E-04, TC-E-06 |
 | RF-08 | Estado inicial de simulación | TC-U-05, TC-I-03 |
 | RF-09 | Ejecución fase Mark | TC-U-06, TC-U-07, TC-U-08, TC-U-09, TC-U-10, TC-U-14, TC-E-17 |
 | RF-10 | Visualización paso a paso | TC-I-04, TC-E-07, TC-E-21 |
-| RF-11 | Ejecución automática | TC-E-08 |
+| RF-11 | Ejecución automática | TC-E-08, TC-E-23 (criterio "grafo vacío") |
 | RF-12 | Ejecución fase Sweep | TC-U-11, TC-U-12 |
 | RF-13 | Visualización del barrido | TC-E-09 |
-| RF-14 | Ejecución completa | TC-I-05, TC-E-10 |
-| RF-15 | Ejecución paso a paso global | TC-I-04, TC-E-07 |
-| RF-16 | Vista tras recolección | TC-E-11 |
+| RF-14 | Ejecución completa | TC-I-05, TC-E-10, TC-I-17, TC-I-18, TC-E-23 |
+| RF-15 | Ejecución paso a paso global | TC-I-04, TC-E-07, TC-E-23 (criterio "grafo vacío") |
+| RF-16 | Vista tras recolección | TC-E-11, TC-E-22 |
 | RF-17 | Reinicio de simulación | TC-I-06, TC-E-12 |
 | RF-18 | Escenarios predefinidos | TC-E-13 |
 | RF-19 | Validación de consistencia | TC-U-13, TC-I-07, TC-I-10 |
@@ -75,7 +76,7 @@ La siguiente tabla muestra la cobertura de los requisitos funcionales del SRS v1
 | RF-22 | Registro de ejecución | TC-I-08, TC-E-10 |
 | RF-23 | Soporte para ciclos | TC-U-09, TC-U-10 |
 | RF-24 | Soporte para múltiples raíces | TC-U-08, TC-I-05 |
-| RF-25 | Importación/exportación | TC-I-09, TC-I-10, TC-E-15 |
+| RF-25 | Importación/exportación | TC-I-09, TC-I-10, TC-E-15, TC-I-13, TC-I-14, TC-I-15, TC-I-16 |
 | RF-26 | Sistema de notificaciones | TC-E-02, TC-E-16, TC-E-17 — RF transversal |
 
 
@@ -266,6 +267,136 @@ Las pruebas unitarias verifican el comportamiento del dominio de forma aislada. 
 | Resultado esperado | A.marked=true, A.visitedOrder=0. El algoritmo termina sin error. A no es procesado más de una vez. |
 
 
+#### TC-U-15  findFreePosition: dentro de los bounds con grafo vacío
+
+| Identificador | TC-U-15 |
+| --- | --- |
+| Nivel | Unitaria |
+| Herramienta | Jest |
+| RF relacionados | RF-01 (apoyo de UX) |
+| CP base | — |
+| Precondición | Utilidad findFreePosition disponible. Sin posiciones ocupadas. |
+| Pasos | 1. Invocar findFreePosition([], { minX:0, minY:0, maxX:800, maxY:500 }, seqRandom([0.5, 0.5])). |
+| Resultado esperado | La posición devuelta cumple x∈[minX+24, maxX-NODE_W-24] e y∈[minY+24, maxY-NODE_H-24]. |
+
+
+#### TC-U-16  findFreePosition: comportamiento determinista con random inyectado
+
+| Identificador | TC-U-16 |
+| --- | --- |
+| Nivel | Unitaria |
+| Herramienta | Jest |
+| RF relacionados | RF-01 (apoyo de UX) |
+| CP base | — |
+| Precondición | Utilidad findFreePosition disponible. |
+| Pasos | 1. Invocar findFreePosition([], bounds, seqRandom([0, 0])). |
+| Resultado esperado | La posición devuelta es exactamente { x: minX + 24, y: minY + 24 }. |
+
+
+#### TC-U-17  findFreePosition: respeta el origen no nulo de los bounds (viewport zoomeado)
+
+| Identificador | TC-U-17 |
+| --- | --- |
+| Nivel | Unitaria |
+| Herramienta | Jest |
+| RF relacionados | RF-01 (apoyo de UX) |
+| CP base | — |
+| Precondición | Utilidad findFreePosition disponible. |
+| Pasos | 1. Invocar findFreePosition con bounds de origen no nulo, p. ej. { minX:200, minY:150, maxX:600, maxY:450 }, y random determinista. |
+| Resultado esperado | La posición devuelta queda dentro del rectángulo simulado del viewport zoomeado y nunca por debajo de minX/minY. |
+
+
+#### TC-U-18  findFreePosition: no solapa con un único nodo ocupado
+
+| Identificador | TC-U-18 |
+| --- | --- |
+| Nivel | Unitaria |
+| Herramienta | Jest |
+| RF relacionados | RF-01 (apoyo de UX) |
+| CP base | — |
+| Precondición | Utilidad findFreePosition disponible. |
+| Pasos | 1. Invocar findFreePosition([{x:100, y:100}], bounds, secuencia random que en el primer intento cae sobre (100,100) y en el segundo en una esquina alejada. |
+| Resultado esperado | La función rechaza el primer candidato (solape) y devuelve el segundo, dentro de bounds, sin solapamiento. |
+
+
+#### TC-U-19  findFreePosition: fallback de tile-scan con muchos nodos ocupados
+
+| Identificador | TC-U-19 |
+| --- | --- |
+| Nivel | Unitaria |
+| Herramienta | Jest |
+| RF relacionados | RF-01 (apoyo de UX) |
+| CP base | — |
+| Precondición | Utilidad findFreePosition disponible. |
+| Pasos | 1. Crear un set de 5 nodos ocupados.2. Forzar que todas las muestras random caigan sobre el primer nodo (random fijo). |
+| Resultado esperado | Tras agotar los MAX_ATTEMPTS, la función entra en el fallback de tile-scan y devuelve una posición sin solapamiento con ninguno de los 5 nodos. |
+
+
+#### TC-U-20  findFreePosition: dos llamadas con seeds distintos no producen solape
+
+| Identificador | TC-U-20 |
+| --- | --- |
+| Nivel | Unitaria |
+| Herramienta | Jest |
+| RF relacionados | RF-01 (apoyo de UX) |
+| CP base | — |
+| Precondición | Utilidad findFreePosition disponible. |
+| Pasos | 1. first = findFreePosition([], bounds, seqRandom([0.1, 0.1]).2. second = findFreePosition([first], bounds, seqRandom([0.9, 0.9]). |
+| Resultado esperado | first y second no solapan (distancia mayor a NODE_WIDTH/HEIGHT en al menos un eje). |
+
+
+#### TC-U-21  findFreePosition: usa bounds por defecto cuando no se proporcionan
+
+| Identificador | TC-U-21 |
+| --- | --- |
+| Nivel | Unitaria |
+| Herramienta | Jest |
+| RF relacionados | RF-01 (apoyo de UX) |
+| CP base | — |
+| Precondición | Utilidad findFreePosition disponible. |
+| Pasos | 1. Invocar findFreePosition([]) sin pasar bounds. |
+| Resultado esperado | Devuelve una posición con coordenadas no negativas (los bounds por defecto del módulo se aplican). No lanza excepción. |
+
+
+#### TC-U-22  Factory MemoryReference: estado por defecto sin handles
+
+| Identificador | TC-U-22 |
+| --- | --- |
+| Nivel | Unitaria |
+| Herramienta | Jest |
+| RF relacionados | RF-04 |
+| CP base | — |
+| Precondición | Factory createMemoryReference disponible. |
+| Pasos | 1. Crear ref = createMemoryReference("r1", "A", "B"). |
+| Resultado esperado | ref.id="r1", sourceObjectId="A", targetObjectId="B", traversed=false, sourceHandle y targetHandle son undefined. |
+
+
+#### TC-U-23  Factory MemoryReference: acepta source y target handle
+
+| Identificador | TC-U-23 |
+| --- | --- |
+| Nivel | Unitaria |
+| Herramienta | Jest |
+| RF relacionados | RF-04 |
+| CP base | — |
+| Precondición | Factory createMemoryReference disponible. |
+| Pasos | 1. Crear ref = createMemoryReference("r1", "A", "B", { sourceHandle: "right", targetHandle: "left" }). |
+| Resultado esperado | ref.sourceHandle="right" y ref.targetHandle="left". |
+
+
+#### TC-U-24  Factory MemoryReference: acepta solo uno de los dos handles
+
+| Identificador | TC-U-24 |
+| --- | --- |
+| Nivel | Unitaria |
+| Herramienta | Jest |
+| RF relacionados | RF-04 |
+| CP base | — |
+| Precondición | Factory createMemoryReference disponible. |
+| Pasos | 1. Crear ref = createMemoryReference("r1", "A", "B", { sourceHandle: "left" }). |
+| Resultado esperado | ref.sourceHandle="left" y ref.targetHandle es undefined. |
+
+
 ## 3. Pruebas de integración
 
 Las pruebas de integración verifican la interacción entre capas: casos de uso de aplicación invocando el dominio, actualización del store y serialización de escenarios. Se ejecutan con Jest.
@@ -399,6 +530,110 @@ Las pruebas de integración verifican la interacción entre capas: casos de uso 
 | Precondición | Módulo importScenario disponible. |
 | Pasos | 1. Construir un JSON con una referencia cuyo targetObjectId apunta a un objeto no incluido en el JSON.2. Invocar importScenario con ese JSON.3. Verificar el resultado. |
 | Resultado esperado | La importación es rechazada. El store no se modifica. Se genera un error descriptivo. |
+
+
+#### TC-I-11  createReference persiste handles cuando se proporcionan
+
+| Identificador | TC-I-11 |
+| --- | --- |
+| Nivel | Integración |
+| Herramienta | Jest |
+| RF relacionados | RF-04 |
+| CP base | — |
+| Precondición | Store con dos objetos A y B. |
+| Pasos | 1. Invocar createReference(a.id, b.id, { source: "right", target: "left" }).2. Leer la referencia resultante del store. |
+| Resultado esperado | La referencia almacenada tiene sourceHandle="right" y targetHandle="left". |
+
+
+#### TC-I-12  createReference por defecto no asigna handles
+
+| Identificador | TC-I-12 |
+| --- | --- |
+| Nivel | Integración |
+| Herramienta | Jest |
+| RF relacionados | RF-04 |
+| CP base | — |
+| Precondición | Store con dos objetos A y B. |
+| Pasos | 1. Invocar createReference(a.id, b.id) sin pasar handles. |
+| Resultado esperado | La referencia almacenada tiene sourceHandle=undefined y targetHandle=undefined. |
+
+
+#### TC-I-13  exportScenario incluye handles cuando la referencia los lleva
+
+| Identificador | TC-I-13 |
+| --- | --- |
+| Nivel | Integración |
+| Herramienta | Jest |
+| RF relacionados | RF-25, RF-04 |
+| CP base | — |
+| Precondición | Store con A(raíz) y B y una referencia A→B con sourceHandle="right" y targetHandle="left". |
+| Pasos | 1. Invocar exportScenario.2. Parsear el JSON. |
+| Resultado esperado | references[0].sourceHandle === "right" y references[0].targetHandle === "left". |
+
+
+#### TC-I-14  exportScenario omite las claves de handle cuando la referencia no los tiene
+
+| Identificador | TC-I-14 |
+| --- | --- |
+| Nivel | Integración |
+| Herramienta | Jest |
+| RF relacionados | RF-25, RF-04 |
+| CP base | — |
+| Precondición | Store con A(raíz) y B y una referencia A→B sin handles. |
+| Pasos | 1. Invocar exportScenario. 2. Parsear el JSON. |
+| Resultado esperado | references[0] no contiene la propiedad sourceHandle ni targetHandle (no existen las claves en el JSON serializado). |
+
+
+#### TC-I-15  Round-trip de exportación/importación preserva los handles
+
+| Identificador | TC-I-15 |
+| --- | --- |
+| Nivel | Integración |
+| Herramienta | Jest |
+| RF relacionados | RF-25, RF-04 |
+| CP base | — |
+| Precondición | Store con A(raíz) y B y una referencia A→B con sourceHandle="right" y targetHandle="left". |
+| Pasos | 1. Exportar JSON. 2. Resetear el store. 3. Importar el JSON. |
+| Resultado esperado | La referencia en el store tras la importación tiene sourceHandle="right" y targetHandle="left". |
+
+
+#### TC-I-16  importScenario acepta JSON sin handles (estilo escenario predefinido)
+
+| Identificador | TC-I-16 |
+| --- | --- |
+| Nivel | Integración |
+| Herramienta | Jest |
+| RF relacionados | RF-25, RF-04 |
+| CP base | — |
+| Precondición | Módulo importScenario disponible. |
+| Pasos | 1. Construir un JSON válido con una referencia A→B sin sourceHandle ni targetHandle. 2. Invocar importScenario con ese JSON. |
+| Resultado esperado | imported=true. La referencia en el store tiene sourceHandle=undefined y targetHandle=undefined. |
+
+
+#### TC-I-17  runSimulation rechaza un grafo vacío (segunda línea de defensa)
+
+| Identificador | TC-I-17 |
+| --- | --- |
+| Nivel | Integración |
+| Herramienta | Jest |
+| RF relacionados | RF-14 |
+| CP base | — |
+| Precondición | Store inicializado con grafo vacío. |
+| Pasos | 1. Invocar runSimulation. 2. Comprobar el resultado. |
+| Resultado esperado | result.ran=false, result.reason="empty-graph". El simulationState no se modifica respecto al estado previo. |
+
+
+#### TC-I-18  runSimulation rechaza grafo vacío también con skipRootCheck=true
+
+| Identificador | TC-I-18 |
+| --- | --- |
+| Nivel | Integración |
+| Herramienta | Jest |
+| RF relacionados | RF-14 |
+| CP base | — |
+| Precondición | Store inicializado con grafo vacío. |
+| Pasos | 1. Invocar runSimulation({ skipRootCheck: true }). |
+| Resultado esperado | result.ran=false, result.reason="empty-graph". El guard de grafo vacío precede al chequeo de raíces. |
 
 
 ## 4. Pruebas end-to-end
@@ -679,9 +914,93 @@ Las pruebas end-to-end verifican la aplicación completa desde el navegador, sim
 | Resultado esperado | El sistema calcula los pasos al pulsar 'Siguiente paso' por primera vez sin necesidad de ejecutar previamente. Cada paso muestra el estado visual correcto. |
 
 
+#### TC-E-22  Vista tras recolección: el botón oculta y restaura nodos recolectados
+
+| Identificador | TC-E-22 |
+| --- | --- |
+| Nivel | E2E |
+| Herramienta | Cypress |
+| RF relacionados | RF-16 |
+| CP base | — |
+| Precondición | Escenario "Múltiples raíces" cargado y simulación finalizada (phase=done). E aislado queda recolectado, A/B/C/D alcanzables. |
+| Pasos | 1. Verificar que `[data-testid="btn-vista-recoleccion"]` es visible y muestra "Ver grafo tras recolección". 2. Pulsar el botón. 3. Verificar que `[data-testid="node-{idE}"]` deja de existir y el botón pasa a "Volver a vista completa". 4. Pulsar de nuevo. 5. Verificar que el nodo E vuelve a aparecer y el botón vuelve al texto inicial. |
+| Resultado esperado | El botón aparece solo cuando phase=done. Al activarlo, los nodos `alive=false` desaparecen del DOM del canvas; al desactivarlo, vuelven a aparecer. El estado lógico no cambia (objects en el store siguen siendo los mismos). |
+| Estado | Pendiente de implementar (ver TEST_IMPLEMENTATION_PLAN.md). |
+
+
+#### TC-E-23  Bloqueo de controles de simulación con grafo vacío
+
+| Identificador | TC-E-23 |
+| --- | --- |
+| Nivel | E2E |
+| Herramienta | Cypress |
+| RF relacionados | RF-11, RF-14, RF-15 (criterios añadidos en SRS v1.5) |
+| CP base | — |
+| Precondición | Aplicación cargada con escenario vacío (`graph.objects.length === 0`). |
+| Pasos | 1. Verificar que `[data-testid="btn-ejecutar"]` está `disabled`. 2. Idem `btn-paso-siguiente` y `btn-reiniciar`. 3. Crear un objeto. 4. Verificar que los tres botones quedan habilitados. 5. Limpiar el escenario. 6. Verificar que vuelven a `disabled`. |
+| Resultado esperado | Con grafo vacío los tres botones permanecen deshabilitados; al añadir un objeto se habilitan; al limpiar vuelven a deshabilitarse. |
+| Estado | Pendiente de implementar (ver TEST_IMPLEMENTATION_PLAN.md). |
+
+
+#### TC-E-24  Drag handle dedicado: el cuerpo del nodo no mueve el nodo
+
+| Identificador | TC-E-24 |
+| --- | --- |
+| Nivel | E2E |
+| Herramienta | Cypress |
+| RF relacionados | RF-03 (clarificación derivada de UI_SPEC §4) |
+| CP base | — |
+| Precondición | Escenario con un nodo A en posición conocida. |
+| Pasos | 1. Capturar la posición inicial de A en el store. 2. Realizar un drag desde el cuerpo central de A (no desde la franja superior). 3. Verificar que la posición de A en el store no ha cambiado. 4. Realizar un drag desde la franja superior (`.object-node-drag-handle`). 5. Verificar que la posición de A sí ha cambiado. |
+| Resultado esperado | El cuerpo del nodo no inicia drag; la franja superior con icono ⠿ sí. |
+| Estado | Pendiente de implementar (ver TEST_IMPLEMENTATION_PLAN.md). |
+
+
+#### TC-E-25  Modo botón persiste sourceHandle/targetHandle por la regla right→left
+
+| Identificador | TC-E-25 |
+| --- | --- |
+| Nivel | E2E |
+| Herramienta | Cypress |
+| RF relacionados | RF-04 |
+| CP base | — |
+| Precondición | Escenario con dos objetos A y B sin referencias. |
+| Pasos | 1. Pulsar `btn-crear-referencia`. 2. Hacer clic en A (origen). 3. Hacer clic en B (destino). 4. Leer la referencia resultante en el store (`__store.getState().graph.references`). |
+| Resultado esperado | Se crea exactamente una referencia A→B con sourceHandle="right" y targetHandle="left". |
+| Estado | Pendiente de implementar (ver TEST_IMPLEMENTATION_PLAN.md). |
+
+
+#### TC-E-26  Drop al vacío en modo arrastre no crea referencia
+
+| Identificador | TC-E-26 |
+| --- | --- |
+| Nivel | E2E |
+| Herramienta | Cypress |
+| RF relacionados | RF-04 (UI_SPEC §7.6 paso 5) |
+| CP base | — |
+| Precondición | Escenario con un único nodo A. |
+| Pasos | 1. Realizar un drag desde el handle derecho de A hasta una zona vacía del canvas (sin nodo destino). 2. Soltar. 3. Verificar el estado del store. |
+| Resultado esperado | No se crea ninguna referencia. `graph.references` sigue vacío. No se muestra ningún toast de error. |
+| Estado | Pendiente de implementar (ver TEST_IMPLEMENTATION_PLAN.md). |
+
+
+#### TC-E-27  onConnect (drag) persiste el lado más cercano al cursor
+
+| Identificador | TC-E-27 |
+| --- | --- |
+| Nivel | E2E (puede degradarse a Integración) |
+| Herramienta | Cypress |
+| RF relacionados | RF-04 |
+| CP base | — |
+| Precondición | Escenario con A y B en posiciones conocidas que permitan un drag horizontal de A.right a B.left. |
+| Pasos | 1. Realizar un drag visualmente plausible desde el handle derecho de A hasta el handle izquierdo de B. 2. Leer la referencia resultante. **Nota**: si el motor de drag de Cypress no logra disparar `onConnect` de ReactFlow de forma fiable (limitación conocida en el helper `dragNodeToNode`), el caso degrada a una prueba de integración del callback `onConnect` con un objeto Connection sintético; en ese supuesto se realiza con jest sin Cypress. |
+| Resultado esperado | La referencia en el store tiene sourceHandle="right" y targetHandle="left". |
+| Estado | Pendiente de implementar (ver TEST_IMPLEMENTATION_PLAN.md). |
+
+
 ## 5. Resumen de casos de prueba
 
-Relación completa de los 45 casos de prueba especificados en este documento:
+Relación completa de los 67 casos de prueba especificados en este documento (61 implementados + 6 E2E pendientes en TEST_IMPLEMENTATION_PLAN.md):
 
 | ID | Nivel | Nombre | RF cubiertos |
 | --- | --- | --- | --- |
@@ -730,3 +1049,27 @@ Relación completa de los 45 casos de prueba especificados en este documento:
 | TC-E-19 | E2E | Crear referencia por botón y cancelar con Escape | RF-04 |
 | TC-E-20 | E2E | Seleccionar arista por clic y eliminar con Delete | RF-05 |
 | TC-E-21 | E2E | Paso a paso sin haber pulsado Ejecutar | RF-10 |
+| TC-U-15 | Unitaria | findFreePosition: dentro de bounds | RF-01 (apoyo) |
+| TC-U-16 | Unitaria | findFreePosition: determinismo con random inyectado | RF-01 (apoyo) |
+| TC-U-17 | Unitaria | findFreePosition: respeta origen no nulo | RF-01 (apoyo) |
+| TC-U-18 | Unitaria | findFreePosition: no solape con un nodo | RF-01 (apoyo) |
+| TC-U-19 | Unitaria | findFreePosition: fallback tile-scan | RF-01 (apoyo) |
+| TC-U-20 | Unitaria | findFreePosition: dos llamadas no solapan | RF-01 (apoyo) |
+| TC-U-21 | Unitaria | findFreePosition: bounds por defecto | RF-01 (apoyo) |
+| TC-U-22 | Unitaria | Factory MemoryReference por defecto sin handles | RF-04 |
+| TC-U-23 | Unitaria | Factory MemoryReference acepta dos handles | RF-04 |
+| TC-U-24 | Unitaria | Factory MemoryReference acepta solo uno | RF-04 |
+| TC-I-11 | Integración | createReference persiste handles | RF-04 |
+| TC-I-12 | Integración | createReference sin handles por defecto | RF-04 |
+| TC-I-13 | Integración | exportScenario incluye handles cuando existen | RF-25, RF-04 |
+| TC-I-14 | Integración | exportScenario omite handles cuando no existen | RF-25, RF-04 |
+| TC-I-15 | Integración | Round-trip preserva handles | RF-25, RF-04 |
+| TC-I-16 | Integración | importScenario acepta JSON sin handles | RF-25, RF-04 |
+| TC-I-17 | Integración | runSimulation rechaza grafo vacío | RF-14 |
+| TC-I-18 | Integración | runSimulation rechaza grafo vacío con skipRootCheck | RF-14 |
+| TC-E-22 | E2E | Vista tras recolección — botón oculta/restaura nodos | RF-16 |
+| TC-E-23 | E2E | Bloqueo de controles con grafo vacío | RF-11, RF-14, RF-15 |
+| TC-E-24 | E2E | Drag handle dedicado: cuerpo del nodo no mueve | RF-03 |
+| TC-E-25 | E2E | Modo botón persiste sourceHandle="right"/targetHandle="left" | RF-04 |
+| TC-E-26 | E2E | Drop al vacío en arrastre no crea referencia | RF-04 |
+| TC-E-27 | E2E (o integración) | onConnect persiste el lado más cercano al cursor | RF-04 |
