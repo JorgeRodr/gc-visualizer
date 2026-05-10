@@ -262,6 +262,7 @@ export function GraphCanvas() {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         connectionMode={ConnectionMode.Loose}
+        connectOnClick={false}
         defaultEdgeOptions={defaultEdgeOptions}
         nodesDraggable={!isInteractionLocked}
         nodesConnectable={!isInteractionLocked}
