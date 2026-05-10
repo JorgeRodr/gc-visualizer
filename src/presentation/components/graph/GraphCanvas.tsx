@@ -45,6 +45,9 @@ export function GraphCanvas() {
     (s) => s.simulationState.currentStep,
   );
   const phase = useSimulationStore((s) => s.simulationState.phase);
+  const showCollectedView = useSimulationStore(
+    (s) => s.simulationState.showCollectedView,
+  );
   const selectedElementId = useSimulationStore(
     (s) => s.simulationState.selectedElementId,
   );
@@ -129,6 +132,24 @@ export function GraphCanvas() {
       })),
     [snapshot.references, selectedElementId],
   );
+
+  // RF-16: when "view after collection" is on, hide collected nodes and any
+  // edges incident to them. localNodes still holds every node so positions
+  // persist when the user toggles the view back off.
+  const visibleNodes = useMemo(
+    () =>
+      showCollectedView ? localNodes.filter((n) => n.data.alive) : localNodes,
+    [localNodes, showCollectedView],
+  );
+  const visibleEdges = useMemo(() => {
+    if (!showCollectedView) return edges;
+    const aliveIds = new Set(
+      localNodes.filter((n) => n.data.alive).map((n) => n.id),
+    );
+    return edges.filter(
+      (e) => aliveIds.has(e.source) && aliveIds.has(e.target),
+    );
+  }, [edges, localNodes, showCollectedView]);
 
   const onNodesChange = useCallback((changes: NodeChange<ObjectNodeType>[]) => {
     setLocalNodes((nds) => applyNodeChanges(changes, nds));
@@ -250,8 +271,8 @@ export function GraphCanvas() {
   return (
     <div data-testid="graph-canvas" className="w-full h-full relative">
       <ReactFlow
-        nodes={localNodes}
-        edges={edges}
+        nodes={visibleNodes}
+        edges={visibleEdges}
         onNodesChange={onNodesChange}
         onConnect={onConnect}
         onNodeDragStop={onNodeDragStop}
