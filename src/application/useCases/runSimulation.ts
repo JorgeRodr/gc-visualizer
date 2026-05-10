@@ -2,7 +2,10 @@ import { computeMarkAndSweepSteps } from "../../domain/algorithms/markAndSweep";
 import { graphValidator } from "../../domain/validators/graphValidator";
 import { useSimulationStore } from "../simulationStore";
 
-export type RunSimulationFailureReason = "no-roots" | "invalid-graph";
+export type RunSimulationFailureReason =
+  | "no-roots"
+  | "invalid-graph"
+  | "empty-graph";
 
 export interface RunSimulationOptions {
   /** When true, do not require at least one root before running. */
@@ -19,6 +22,13 @@ export const runSimulation = (
   options: RunSimulationOptions = {},
 ): RunSimulationResult => {
   const { graph } = useSimulationStore.getState();
+
+  // Second line of defense: nothing to simulate on an empty graph. The UI
+  // disables the entry buttons in this state, but a programmatic caller
+  // (or a stale stepSimulation chain) could still reach this point.
+  if (graph.objects.length === 0) {
+    return { ran: false, reason: "empty-graph" };
+  }
 
   const validation = graphValidator.validate(graph);
   if (!validation.isValid) {

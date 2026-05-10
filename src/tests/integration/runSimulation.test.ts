@@ -95,6 +95,24 @@ describe("runSimulation use case", () => {
     expect(result.reason).toBe("no-roots");
   });
 
+  test("runSimulation rejects an empty graph as a second line of defense", () => {
+    // Empty graph: no objects, no references.
+    const before = useSimulationStore.getState().simulationState;
+
+    const result = runSimulation();
+    expect(result.ran).toBe(false);
+    expect(result.reason).toBe("empty-graph");
+
+    // Store must not be modified.
+    expect(useSimulationStore.getState().simulationState).toEqual(before);
+  });
+
+  test("runSimulation rejects empty graph even with skipRootCheck=true", () => {
+    const result = runSimulation({ skipRootCheck: true });
+    expect(result.ran).toBe(false);
+    expect(result.reason).toBe("empty-graph");
+  });
+
   test("runSimulation runs with skipRootCheck=true and collects all objects when no roots", () => {
     const a = createObject({ label: "A" });
     const b = createObject({ label: "B" });
