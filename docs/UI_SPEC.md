@@ -1,10 +1,11 @@
-# GC Visualizer — UI Specification v2.1
+# GC Visualizer — UI Specification v2.2
 
 > Descripción estructurada del mockup y comportamientos de interacción para implementación.
 > Referencia visual: `docs/mockup.jpg`
 > Documentos relacionados: @SRS.md (RF-01 a RF-26, RI-01 a RI-10), @SDD.md (sección 7)
 > Estándar de referencia para decisiones de usabilidad: ISO 9241-110
-> Versión anterior: v2.0 — Correcciones VAL-UI_SPEC-v2.0 (H-01 a H-04)
+> Versión anterior: v2.1
+> v2.2 (10/05/2026): nodos con drag handle dedicado (⠿) y dos handles laterales (left/right). §1 ajusta altura del log a fija. §4 reescribe la descripción del nodo. §7.6/§7.7 documentan creación por arrastre lateral y regla right→left del modo botón. §8 incorpora condición "grafo vacío" y el botón "Ver grafo tras recolección". §11 añade campos opcionales `sourceHandle`/`targetHandle` en referencias. §12 actualiza checklist.
 
 ---
 
@@ -30,7 +31,7 @@ La aplicación ocupa el viewport completo y se divide en cinco zonas fijas. El l
 - **Graph canvas**: área flexible que ocupa todo el espacio restante entre paneles
 - **Right panel**: ancho fijo ~280px, borde izquierdo separador
 - **Top bar**: altura fija ~50px, fondo blanco, borde inferior sutil
-- **Bottom panel**: altura variable, dividida en controles (arriba) y log (abajo con scroll)
+- **Bottom panel**: altura fija, dividida en controles (arriba) y log (abajo). El log tiene altura fija de 128px desde el inicio con scroll interno cuando el contenido la supera (no crece con el contenido).
 
 ---
 
@@ -101,17 +102,23 @@ Este texto se muestra siempre, incluso cuando los botones están deshabilitados 
   edges={edges}
   onNodesChange={onNodesChange}  // OBLIGATORIO: sin esto los nodos vuelven a su posición al re-renderizar
   onEdgesChange={onEdgesChange}
-  onConnect={onConnect}          // gestiona creación de referencias por arrastre
+  onConnect={onConnect}                  // gestiona creación de referencias por arrastre
   nodeTypes={nodeTypes}
   edgeTypes={edgeTypes}
-  connectionMode={ConnectionMode.Loose}  // permite arrastrar desde cualquier punto del nodo
+  connectionMode={ConnectionMode.Loose}  // ambos lados del nodo sirven como source/target
+  connectOnClick={false}                 // un clic sobre un handle nunca inicia conexión
   fitView
 />
 ```
 
+Cada nodo se construye con `dragHandle: ".object-node-drag-handle"` para que ReactFlow solo permita el arrastre desde la franja superior con icono ⠿.
+
 ### Nodos (`ObjectNode.tsx`)
 - Rectángulo redondeado, tamaño ~120×40px
-- El **nodo completo actúa como handle**: al pasar el cursor sobre el nodo, aparece cursor crosshair (⊕) indicando que se puede arrastrar para crear una referencia
+- **Drag handle dedicado**: franja superior de ~12px con icono ⠿ (clase `object-node-drag-handle`). Es el ÚNICO punto desde el que el nodo se puede arrastrar para reposicionarlo. Cursor `grab` / `grabbing`. La prop `dragHandle` del nodo de React Flow apunta a esa clase.
+- **Puntos de anclaje de aristas**: dos handles laterales pequeños (~8×8px) en `Position.Left` (id `"left"`, `type="target"`) y `Position.Right` (id `"right"`, `type="source"`). Bajo `ConnectionMode.Loose` ambos sirven como source y como target. El `type` declarado solo establece la convención del modo botón (right=source, left=target).
+- El cuerpo central del nodo (no la franja superior, no los handles) es zona neutra: clic la selecciona, doble clic activa edición inline; ni mueve el nodo ni inicia conexiones.
+- El div raíz del nodo lleva siempre la clase `nopan` para que la zona del nodo no compita con el sistema de pan/zoom de ReactFlow cuando `nodesDraggable=false` (el wrapper de ReactFlow solo añade la clase automáticamente cuando el nodo es arrastrable).
 - Doble clic sobre el nodo → edición inline de la etiqueta (ver sección 7.2)
 - `data-testid`: `node-{id}`
 
@@ -201,14 +208,14 @@ Definir todos los colores como constantes en `src/presentation/styles/stateColor
 5. Bloqueado durante simulación activa → toast de aviso
 
 ### 7.6 Crear referencia — método principal (arrastre)
-1. Usuario pasa cursor sobre nodo origen → cursor cambia a crosshair (⊕)
-2. Usuario arrastra hacia el nodo destino
-3. Mientras arrastra: línea de conexión provisional visible
-4. Al soltar sobre nodo destino: se crea la referencia
-5. Al soltar en el vacío: la línea desaparece sin crear referencia
-6. Las **autorreferencias están permitidas** (soltar sobre el mismo nodo origen → A→A)
-7. Referencia duplicada → toast: "Esta referencia ya existe entre estos dos objetos"
-8. Bloqueado durante simulación activa → toast: "No es posible crear referencias durante la simulación"
+1. Usuario pasa el cursor sobre uno de los dos handles laterales del nodo origen (left/right). Cursor cambia a crosshair sobre el handle.
+2. Usuario arrastra hacia uno de los handles laterales del nodo destino. ReactFlow resuelve la elección de handle por proximidad: el handle más cercano al cursor en el momento del drop es el que queda anclado en cada extremo.
+3. Mientras arrastra: línea de conexión provisional visible.
+4. Al soltar sobre un handle del nodo destino: se crea la referencia con `sourceHandle` y `targetHandle` igual a los handles utilizados (`"left"` o `"right"`). El anclaje permanece al re-renderizar.
+5. **Al soltar fuera de cualquier handle (vacío del canvas o cuerpo central del nodo)**: la línea desaparece sin crear referencia.
+6. Las **autorreferencias están permitidas** (soltar sobre un handle del propio nodo origen → A→A).
+7. Referencia duplicada → toast: "Esta referencia ya existe entre estos dos objetos".
+8. Bloqueado durante simulación activa → toast: "No es posible crear referencias durante la simulación".
 
 ### 7.7 Crear referencia — método alternativo (botón)
 1. Usuario pulsa "Crear referencia" → el botón queda resaltado (modo conexión activo)
@@ -216,9 +223,10 @@ Definir todos los colores como constantes en `src/presentation/styles/stateColor
 3. Usuario hace clic en nodo origen → nodo resaltado
 4. Texto en canvas: "Ahora haz clic en el objeto destino..."
 5. Usuario hace clic en nodo destino → referencia creada, modo conexión desactivado
-6. Escape → cancela el modo conexión en cualquier momento
-7. Mismas validaciones que el método por arrastre
-8. Bloqueado durante simulación activa: el botón queda deshabilitado (ver sección 3)
+6. Regla fija de anclaje: la referencia se crea con `sourceHandle: "right"` y `targetHandle: "left"`. En el modo botón el usuario no elige el lado.
+7. Escape → cancela el modo conexión en cualquier momento
+8. Mismas validaciones que el método por arrastre
+9. Bloqueado durante simulación activa: el botón queda deshabilitado (ver sección 3)
 
 ### 7.8 Ejecución automática de la simulación
 1. Usuario pulsa "Ejecutar"
@@ -256,16 +264,28 @@ Definir todos los colores como constantes en `src/presentation/styles/stateColor
 
 ### Tabla de estados de habilitación de controles
 
-| Botón | idle | running | paused | done |
-|---|---|---|---|---|
-| Ejecutar | ✓ | ✗ | ✗ | ✓ |
-| Pausar | ✗ | ✓ | ✗ | ✗ |
-| Paso anterior | según step | ✗ | según step | según step |
-| Paso siguiente | ✓ | ✗ | ✓ | ✗ |
-| Reiniciar | ✓ | ✓ | ✓ | ✓ |
+| Botón | idle | running | paused | done | grafo vacío |
+|---|---|---|---|---|---|
+| Ejecutar | ✓ | ✗ | ✗ | ✓ | ✗ (sobreescribe) |
+| Pausar | ✗ | ✓ | ✗ | ✗ | ✗ |
+| Paso anterior | según step | ✗ | según step | según step | ✗ |
+| Paso siguiente | ✓ | ✗ | ✓ | ✗ | ✗ (sobreescribe) |
+| Reiniciar | ✓ | ✓ | ✓ | ✓ | ✗ (sobreescribe) |
+| Ver grafo tras recolección | ✗ | ✗ | ✗ | ✓ | ✗ |
+
+La columna "grafo vacío" (`graph.objects.length === 0`) tiene prioridad sobre las demás: cuando el grafo no contiene objetos, Ejecutar / Paso siguiente / Reiniciar quedan deshabilitados aunque la fase en otra columna los habilitase. El slider de velocidad y Pausar mantienen su lógica habitual.
+
+### Botón "Ver grafo tras recolección" (`btn-vista-recoleccion`)
+
+- Visible solo cuando `phase === "done"` (RF-16, CU-11).
+- Texto dinámico: `"Ver grafo tras recolección"` cuando `showCollectedView === false`, `"Volver a vista completa"` cuando `true`.
+- Al activarse oculta del canvas los nodos con `alive === false` y las aristas que tienen alguno de sus extremos en esos nodos. El estado lógico no se modifica.
+- Al desactivarse vuelve a mostrar el grafo completo.
+- Al reiniciar la simulación (`resetSimulation`) la vista vuelve automáticamente a `showCollectedView=false` (RF-17 / FA-10A del UCD).
 
 ### Log (`ExecutionLog.tsx`)
 - Formato: `HH:MM  Descripción del evento`
+- Altura fija de 128px desde el inicio. Scroll interno cuando el contenido la supera.
 - Scroll automático al final con cada nueva entrada
 - `data-testid`: `execution-log`
 
@@ -325,8 +345,13 @@ Descripción: modal con pasos explicativos (cómo crear objetos, referencias, ra
 ### Formato JSON requerido por el parser
 
 **Campos obligatorios**: `objects[].id`, `objects[].label`, `objects[].isRoot`, `references[].id`, `references[].sourceObjectId`, `references[].targetObjectId`
-**Campos opcionales**: `objects[].position`
+**Campos opcionales**: `objects[].position`, `references[].sourceHandle` (`"left" | "right"`), `references[].targetHandle` (`"left" | "right"`)
 **Campos que NO deben estar en el JSON**: `marked`, `alive`, `visitedOrder`, `traversed` (son estado de simulación, no del escenario)
+
+Notas sobre los handles:
+- El serializer solo emite `sourceHandle` y `targetHandle` cuando están presentes en la referencia (round-trip limpio para escenarios sin handles, p. ej. los predefinidos).
+- El parser acepta JSON sin estos campos sin error: la referencia importada queda sin handles y ReactFlow elige el lado por defecto al renderizar.
+- Los escenarios predefinidos de §11 NO incluyen handles; aplican la regla de anclaje por defecto.
 
 ### JSON completo de cada escenario
 
@@ -415,13 +440,21 @@ Antes de dar por completado cada componente, verificar:
 
 - [ ] `onNodesChange` conectado al store (posición de nodos persiste al re-renderizar)
 - [ ] `connectionMode={ConnectionMode.Loose}` configurado en ReactFlow
+- [ ] `connectOnClick={false}` configurado en ReactFlow (un clic sobre handle no inicia conexión)
+- [ ] App envuelta en `<ReactFlowProvider>` para que `useReactFlow()` esté disponible fuera del propio canvas (lo necesita el botón "Crear objeto" para calcular posiciones libres)
+- [ ] Cada nodo expone dos handles laterales (`id="left"` Position.Left y `id="right"` Position.Right)
+- [ ] Cada nodo tiene un drag handle dedicado (`.object-node-drag-handle`) y `dragHandle` en el nodo apunta a esa clase
+- [ ] El div raíz del nodo lleva la clase `nopan` (asegura que `dblclick` y `click` llegan al wrapper también cuando `nodesDraggable=false` durante simulación)
 - [ ] `onNodeDoubleClick` implementado para edición inline de etiqueta
 - [ ] Aristas seleccionables con clic simple (`onEdgeClick` conectado al store)
 - [ ] `setInterval`/`setTimeout` usado para ejecución automática (no bucle síncrono)
 - [ ] Velocidad del slider afecta al delay de la animación en tiempo real
 - [ ] Paso a paso funciona independientemente de si se ha ejecutado antes
+- [ ] Botones Ejecutar / Paso siguiente / Reiniciar deshabilitados con grafo vacío
+- [ ] Botón `btn-vista-recoleccion` solo visible cuando `phase === "done"` y filtra nodos con `alive=false`
 - [ ] Todos los `data-testid` presentes en los componentes correspondientes
 - [ ] Toasts implementados para todas las situaciones de la sección 9
 - [ ] No se usa localStorage en ningún lugar
 - [ ] Verificar en `package.json` que se usa `@xyflow/react` (React Flow v12, compatible con React 18) y no la versión antigua `reactflow`
 - [ ] Constantes de color definidas en `stateColors.ts`
+- [ ] El log inferior (`ExecutionLog`) tiene altura fija (`h-32`) desde el inicio con scroll interno (no `max-h-32`)

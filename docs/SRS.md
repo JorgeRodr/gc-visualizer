@@ -9,6 +9,7 @@
 | 1.1 | 04/05/2026 | Correcciones derivadas del informe VAL-SRS-v1.0 (H-01 a H-12). Actualización de RF-02, RF-09, RF-11, RF-13, RF-15, RF-17, RF-18, RF-19, RF-25, RNF-03 y Apéndice A. | — |
 | 1.2 | 04/05/2026 | Correcciones derivadas del informe VAL2-SRS-v1.1 (H2-01 a H2-04). Actualización de RF-03, RF-09, RF-12 y sección 1.3. | — |
 | 1.4 | 05/05/2026 | Correcciones VAL-SRS-v1.3 (H-01 a H-07). Eliminadas referencias académicas. Sustituido 'Segunda iteración' por 'Segunda versión' en historial. Añadido texto exacto toast en RF-26. Eliminado 'superviviente' de RF-13 y RF-16. Alineados escenarios RF-18 con UI_SPEC. Actualizado RI-10 con referencia a RF-26. Añadida nota de impacto en documentos relacionados. | — |
+| 1.5 | 10/05/2026 | Ajustes derivados de la sesión de bugfix/mejoras. RF-04 reescrito: dos handles laterales (left/right) sustituyen al "nodo completo como punto de conexión", con resolución por proximidad en arrastre y regla right→left en modo botón. RI-04 actualizado en consecuencia. RF-11, RF-14 y RF-15 amplían criterios de aceptación con la condición "grafo no vacío" para habilitar Ejecutar / Paso siguiente / Reiniciar. RF-25 anota campos opcionales `sourceHandle` / `targetHandle` en `references[]` del JSON. | — |
 
 
 ## 1. Introducción
@@ -279,15 +280,19 @@ No se permiten referencias duplicadas exactas entre el mismo origen y destino.
 
 Se permiten autorreferencias (origen = destino). El algoritmo las gestiona sin bucles infinitos.
 
-Método principal de creación: arrastre desde cualquier punto del nodo origen hasta el nodo destino. El nodo completo actúa como punto de conexión (no solo handles fijos). Al pasar el cursor sobre un nodo, el cursor cambia a crosshair indicando que se puede iniciar una conexión.
+Cada nodo expone dos puntos de anclaje: lateral izquierdo y lateral derecho. Bajo ConnectionMode.Loose, ambos lados son utilizables tanto como origen (source) como destino (target).
 
-Método alternativo de creación: botón 'Crear referencia' en el panel de edición, que activa un modo de conexión por clic secuencial (primero origen, luego destino).
+Método principal de creación: arrastre desde un lateral del nodo origen hasta un lateral del nodo destino. El sistema resuelve el anclaje por proximidad: el lado del nodo origen y el lado del nodo destino más cercanos al cursor durante el arrastre quedan registrados con la referencia para que la arista permanezca anclada a esos lados al re-renderizar.
+
+Método alternativo de creación: botón 'Crear referencia' en el panel de edición, que activa un modo de conexión por clic secuencial (primero origen, luego destino). En este modo el lateral derecho del nodo origen actúa como source y el lateral izquierdo del nodo destino actúa como target.
+
+Los lados elegidos se persisten como atributos opcionales `sourceHandle` y `targetHandle` de la referencia y se exportan al JSON cuando están presentes (ver RF-25).
 
 Criterios de aceptación:
 
-El usuario puede crear una referencia arrastrando desde cualquier punto de un nodo origen hasta un nodo destino.
+El usuario puede crear una referencia arrastrando desde un lateral del nodo origen hasta un lateral del nodo destino. El lado al que se ancla la arista en cada extremo coincide con el lado más próximo al cursor en el momento del drop.
 
-El usuario puede crear una referencia mediante el botón 'Crear referencia' y clic secuencial en origen y destino.
+El usuario puede crear una referencia mediante el botón 'Crear referencia' y clic secuencial en origen y destino. La arista resultante queda anclada con source en el lateral derecho del origen y target en el lateral izquierdo del destino.
 
 La referencia se visualiza correctamente con dirección.
 
@@ -296,6 +301,8 @@ El sistema no permite crear referencias duplicadas exactas y muestra un aviso al
 El sistema permite crear autorreferencias (A→A) y las representa correctamente.
 
 El modo de conexión por botón puede cancelarse en cualquier momento pulsando Escape.
+
+Al soltar el arrastre fuera de un nodo, no se crea ninguna referencia.
 
 
 #### RF-05. Eliminación de referencias
@@ -458,6 +465,8 @@ El usuario puede pausar y reanudar la ejecución.
 
 Mientras la ejecución automática está activa, los controles de avance y retroceso manual quedan deshabilitados. Solo la pausa está disponible.
 
+El control 'Ejecutar' permanece deshabilitado mientras el grafo no contenga al menos un objeto. No es posible iniciar la ejecución automática sobre un escenario vacío.
+
 
 #### RF-12. Ejecución de la fase Sweep
 
@@ -501,6 +510,8 @@ Al pulsar 'Ejecutar', se realiza la fase Mark y después la fase Sweep.
 
 El resultado final es correcto y consistente.
 
+Si el grafo está vacío, el sistema rechaza la operación sin modificar el estado y el control 'Ejecutar' permanece deshabilitado.
+
 
 #### RF-15. Ejecución paso a paso global
 
@@ -525,6 +536,8 @@ Al retroceder, el usuario puede volver al paso anterior sin inconsistencias.
 Al reiniciar, el paso actual vuelve al inicio.
 
 Los controles de paso a paso solo están disponibles cuando la ejecución automática está pausada o no ha sido iniciada.
+
+Los controles 'Paso siguiente' y 'Reiniciar' permanecen deshabilitados mientras el grafo no contenga al menos un objeto.
 
 
 #### RF-16. Visualización del grafo tras la recolección
@@ -702,6 +715,8 @@ El usuario puede exportar un escenario en formato JSON e importar uno previament
 
 Un escenario exportado incluye: objetos, referencias, raíces y configuración necesaria para reconstruir el escenario.
 
+Cada referencia puede llevar opcionalmente los campos `sourceHandle` y `targetHandle` (valores `"left"` o `"right"`) que indican el lado de anclaje en el nodo origen y destino respectivamente. Estos campos solo se emiten cuando están presentes en la referencia y permiten preservar el anclaje visual al hacer round-trip de exportación/importación. Los escenarios sin estos campos se importan sin error y el sistema elige el lado por defecto al renderizar.
+
 Criterios de aceptación:
 
 El usuario puede exportar un escenario y el sistema genera un archivo JSON válido.
@@ -772,7 +787,7 @@ Debe existir un sistema visual de estados para los objetos: normal (representaci
 
 #### RI-04
 
-Las referencias deben visualizar su dirección mediante indicador gráfico (flecha). La interfaz debe permitir crear referencias de forma intuitiva sin limitar la conexión a puntos fijos únicos.
+Las referencias deben visualizar su dirección mediante indicador gráfico (flecha). La interfaz debe permitir crear referencias de forma intuitiva mediante dos puntos de anclaje laterales (izquierdo y derecho) en cada nodo. Bajo ConnectionMode.Loose ambos lados sirven como origen y destino; el lado utilizado en cada extremo se resuelve por proximidad al cursor durante el arrastre y se persiste con la referencia para que el anclaje permanezca al re-renderizar.
 
 
 #### RI-05
