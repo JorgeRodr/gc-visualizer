@@ -79,6 +79,7 @@ export function GraphCanvas() {
         type: "object" as const,
         position: obj.position,
         selected: selectedElementId === obj.id,
+        dragHandle: ".object-node-drag-handle",
         data: {
           label: obj.label,
           isRoot: obj.isRoot,

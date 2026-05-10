@@ -76,8 +76,16 @@ export function ObjectNode({ id, data, selected }: NodeProps<ObjectNodeType>) {
   return (
     <div
       data-testid={`node-${id}`}
-      className={`relative px-4 py-2 rounded border min-w-[120px] text-center select-none cursor-grab active:cursor-grabbing ${className}`}
+      className={`relative pt-4 px-4 pb-2 rounded border min-w-[120px] text-center select-none ${className}`}
     >
+      <div
+        className="object-node-drag-handle absolute top-0 left-0 right-0 h-3 flex items-center justify-center leading-none rounded-t cursor-grab active:cursor-grabbing opacity-50 hover:opacity-100 z-10"
+        title="Arrastrar"
+        aria-label="Arrastrar nodo"
+      >
+        <span className="text-[10px] tracking-tighter">⠿</span>
+      </div>
+
       {isEditing ? (
         <input
           ref={inputRef}
