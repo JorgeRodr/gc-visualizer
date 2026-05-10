@@ -1,0 +1,49 @@
+name: E2E — Tests Cypress
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Build de producción
+        run: npm run build
+
+      - name: Ejecutar tests Cypress
+        uses: cypress-io/github-action@v6
+        with:
+          start: npm run preview
+          wait-on: 'http://localhost:4173'
+          wait-on-timeout: 30
+
+      - name: Publicar vídeos de Cypress
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cypress-videos
+          path: cypress/videos/
+          retention-days: 7
+
+      - name: Publicar capturas de Cypress
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots/
+          retention-days: 7
