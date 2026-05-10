@@ -5,6 +5,7 @@ import path from "node:path";
 const root = import.meta.dirname;
 
 export default defineConfig({
+  base: '/gc-visualizer/',
   plugins: [react()],
   server: {
     port: 5173,
