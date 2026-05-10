@@ -17,9 +17,15 @@ export interface CreateReferenceResult {
   reason?: CreateReferenceFailureReason;
 }
 
+export interface CreateReferenceHandles {
+  source?: string | null;
+  target?: string | null;
+}
+
 export const createReference = (
   sourceObjectId: string,
   targetObjectId: string,
+  handles?: CreateReferenceHandles,
 ): CreateReferenceResult => {
   const { graph, simulationState } = useSimulationStore.getState();
 
@@ -36,7 +42,10 @@ export const createReference = (
   }
 
   const id = crypto.randomUUID();
-  const ref = createMemoryReference(id, sourceObjectId, targetObjectId);
+  const ref = createMemoryReference(id, sourceObjectId, targetObjectId, {
+    sourceHandle: handles?.source,
+    targetHandle: handles?.target,
+  });
   useSimulationStore.setState({ graph: addReference(graph, ref) });
   return { created: true, referenceId: id };
 };
