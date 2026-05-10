@@ -22,6 +22,7 @@ export function SimulationControls() {
   const updateSimulationState = useSimulationStore(
     (s) => s.updateSimulationState,
   );
+  const hasObjects = useSimulationStore((s) => s.graph.objects.length > 0);
 
   const [speed, setSpeed] = useState(DEFAULT_SPEED);
   const [running, setRunning] = useState(false);
@@ -100,11 +101,14 @@ export function SimulationControls() {
   //   idle ✓, running ✗, paused ✓ (acts as "Reanudar" per RF-11 and TC-E-08
   //   step 5 — the spec table itself does not list a separate Reanudar button),
   //   done ✓ (handlePlay resets first and starts over).
-  const canPlay = !running;
+  // Empty graph: nothing to simulate or reset, so the entry-point buttons
+  // (Ejecutar, Paso siguiente, Reiniciar) stay disabled. Pause and the speed
+  // slider keep their existing logic — they're only reachable while running.
+  const canPlay = !running && hasObjects;
   const canPause = running;
   const canStepBackward = !running && hasSteps && !atFirstStep;
-  const canStepForward = !running && !atLastStep;
-  const canReset = true;
+  const canStepForward = !running && !atLastStep && hasObjects;
+  const canReset = hasObjects;
 
   const handlePlay = useCallback(() => {
     if (running) return;
