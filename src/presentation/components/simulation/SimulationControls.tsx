@@ -16,6 +16,12 @@ export function SimulationControls() {
   const currentStep = useSimulationStore(
     (s) => s.simulationState.currentStep,
   );
+  const showCollectedView = useSimulationStore(
+    (s) => s.simulationState.showCollectedView,
+  );
+  const updateSimulationState = useSimulationStore(
+    (s) => s.updateSimulationState,
+  );
 
   const [speed, setSpeed] = useState(DEFAULT_SPEED);
   const [running, setRunning] = useState(false);
@@ -141,6 +147,9 @@ export function SimulationControls() {
     resetSimulation();
   };
 
+  const handleToggleCollectedView = () =>
+    updateSimulationState({ showCollectedView: !showCollectedView });
+
   const baseBtn =
     "px-3 py-1.5 text-sm rounded border transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
   const primaryBtn = `${baseBtn} bg-slate-800 text-white border-slate-800 hover:bg-slate-700`;
@@ -206,6 +215,18 @@ export function SimulationControls() {
         />
         <span className="text-sm text-gray-700 w-8">{speed}x</span>
       </div>
+
+      {isDone && (
+        <button
+          data-testid="btn-vista-recoleccion"
+          onClick={handleToggleCollectedView}
+          className={secondaryBtn}
+        >
+          {showCollectedView
+            ? "Volver a vista completa"
+            : "Ver grafo tras recolección"}
+        </button>
+      )}
 
       {confirmingNoRoots && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
