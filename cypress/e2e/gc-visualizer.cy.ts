@@ -263,25 +263,56 @@ describe("GC Visualizer — End-to-End", () => {
         { id: "B", label: "B" },
         { id: "C", label: "C" },
         { id: "D", label: "D" },
+        { id: "E", label: "E" },
+        { id: "F", label: "F" },
       ],
       [
         { id: "r-ab", source: "A", target: "B" },
         { id: "r-bc", source: "B", target: "C" },
         { id: "r-cd", source: "C", target: "D" },
+        { id: "r-de", source: "D", target: "E" },
+        { id: "r-ef", source: "E", target: "F" },
       ],
     );
 
-    cy.get('[data-testid="slider-velocidad"]').invoke("val", 10).trigger("input").trigger("change");
+    // Step 1: slider at 1x — slow enough to give us time to pause mid-run.
+    cy.get('[data-testid="slider-velocidad"]')
+      .invoke("val", 1)
+      .trigger("input")
+      .trigger("change");
 
+    // Step 2: start auto-play. Manual step controls must be disabled while running.
     cy.get('[data-testid="btn-ejecutar"]').click();
-    // Manual step buttons disabled while running
     cy.get('[data-testid="btn-paso-anterior"]').should("be.disabled");
     cy.get('[data-testid="btn-paso-siguiente"]').should("be.disabled");
+    cy.get('[data-testid="btn-pausar"]').should("not.be.disabled");
 
-    // Simulation finishes (10x speed → ~100ms per step → all steps in <2s)
+    // Step 3: bump to 10x mid-run — change must take effect immediately.
+    cy.get('[data-testid="slider-velocidad"]')
+      .invoke("val", 10)
+      .trigger("input")
+      .trigger("change");
+
+    // Step 4: pause before completion. Manual controls re-enable; pausar disables.
+    cy.wait(120);
+    cy.get('[data-testid="btn-pausar"]').click();
+    cy.get('[data-testid="btn-pausar"]').should("be.disabled");
+    cy.get('[data-testid="btn-paso-siguiente"]').should("not.be.disabled");
+
+    // Capture currentStep at pause to verify we have not yet finished.
+    cy.window().then((win) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const state = (win as any).__store.getState();
+      expect(state.simulationState.phase).not.to.equal("done");
+    });
+
+    // Step 5: resume via the same Ejecutar button (acts as "Reanudar" while paused
+    // since UI_SPEC §8 does not list a separate button — see comment in
+    // SimulationControls regarding canPlay).
+    cy.get('[data-testid="btn-ejecutar"]').should("not.be.disabled").click();
+
+    // Simulation finishes.
     waitForPhaseLabel("Completado");
-
-    // After completion, manual back/forward should reflect the steps we have.
     cy.get('[data-testid="btn-paso-anterior"]').should("not.be.disabled");
   });
 
