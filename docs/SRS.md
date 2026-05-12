@@ -1,4 +1,4 @@
-# GC Visualizer — Software Requirements Specification (SRS v1.2)
+# GC Visualizer — Software Requirements Specification (SRS v1.5)
 
 
 ### Historial de revisiones
