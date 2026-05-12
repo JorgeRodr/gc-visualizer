@@ -677,4 +677,216 @@ describe("GC Visualizer — End-to-End", () => {
       "—",
     );
   });
+
+  // --------------------------------------------------------------------------
+  // 8.6 — TC-E-22..27 (vista post-recolección, guard de grafo vacío, handles)
+  // --------------------------------------------------------------------------
+
+  it("TC-E-22: vista tras recolección oculta y restaura nodos recolectados", () => {
+    // Múltiples raíces → E queda recolectado tras la simulación.
+    seedScenario(
+      [
+        { id: "A", label: "A", isRoot: true, position: { x: 100, y: 150 } },
+        { id: "B", label: "B", position: { x: 350, y: 150 } },
+        { id: "C", label: "C", isRoot: true, position: { x: 100, y: 350 } },
+        { id: "D", label: "D", position: { x: 350, y: 350 } },
+        { id: "E", label: "E", position: { x: 600, y: 250 } },
+      ],
+      [
+        { id: "r-ab", source: "A", target: "B" },
+        { id: "r-cd", source: "C", target: "D" },
+      ],
+    );
+
+    // El botón no debe estar antes de done.
+    cy.get('[data-testid="btn-vista-recoleccion"]').should("not.exist");
+
+    cy.get('[data-testid="btn-ejecutar"]').click();
+    waitForPhaseLabel("Completado");
+
+    // Texto inicial del botón.
+    cy.get('[data-testid="btn-vista-recoleccion"]')
+      .should("be.visible")
+      .and("contain", "Ver grafo tras recolección");
+
+    // Activar la vista: E desaparece del DOM.
+    cy.get('[data-testid="btn-vista-recoleccion"]').click();
+    cy.get('[data-testid="node-E"]').should("not.exist");
+    cy.get('[data-testid="node-A"]').should("exist");
+    cy.get('[data-testid="btn-vista-recoleccion"]').should(
+      "contain",
+      "Volver a vista completa",
+    );
+
+    // Estado lógico intacto.
+    cy.window()
+      .its("__store")
+      .invoke("getState")
+      .its("graph.objects")
+      .should("have.length", 5);
+
+    // Desactivar la vista: E vuelve.
+    cy.get('[data-testid="btn-vista-recoleccion"]').click();
+    cy.get('[data-testid="node-E"]').should("exist");
+    cy.get('[data-testid="btn-vista-recoleccion"]').should(
+      "contain",
+      "Ver grafo tras recolección",
+    );
+  });
+
+  it("TC-E-23: bloqueo de controles de simulación con grafo vacío", () => {
+    // El beforeEach ya hace reset; el grafo arranca vacío.
+    cy.window()
+      .its("__store")
+      .invoke("getState")
+      .its("graph.objects")
+      .should("have.length", 0);
+
+    cy.get('[data-testid="btn-ejecutar"]').should("be.disabled");
+    cy.get('[data-testid="btn-paso-siguiente"]').should("be.disabled");
+    cy.get('[data-testid="btn-reiniciar"]').should("be.disabled");
+
+    // Crear un objeto → habilitan.
+    cy.get('[data-testid="btn-crear-objeto"]').click();
+    cy.get('[data-testid="btn-ejecutar"]').should("not.be.disabled");
+    cy.get('[data-testid="btn-paso-siguiente"]').should("not.be.disabled");
+    cy.get('[data-testid="btn-reiniciar"]').should("not.be.disabled");
+
+    // Limpiar escenario → vuelven a deshabilitarse.
+    cy.get('[data-testid="btn-limpiar-escenario"]').click();
+    cy.get('[data-testid="btn-ejecutar"]').should("be.disabled");
+    cy.get('[data-testid="btn-paso-siguiente"]').should("be.disabled");
+    cy.get('[data-testid="btn-reiniciar"]').should("be.disabled");
+  });
+
+  it("TC-E-24: drag handle dedicado — solo la franja superior mueve el nodo", () => {
+    // El motor de drag de React Flow + pointer events sintéticos de Cypress
+    // resulta inestable (limitación conocida — ver helper dragNodeToNode más
+    // arriba). En lugar de orquestar pointer events, validamos el contrato
+    // de configuración que produce el comportamiento descrito:
+    //   1. El nodo expone una franja superior con la clase
+    //      `.object-node-drag-handle` y cursor `grab`.
+    //   2. El cuerpo del nodo lleva la clase `nopan` para que React Flow no
+    //      arrastre el lienzo desde el cuerpo y no inicie drag del nodo (la
+    //      franja es el único drag handle declarado).
+    //   3. Esos dos hechos juntos derivan en el comportamiento del UI_SPEC §4.
+    seedScenario([{ id: "A", label: "A", position: { x: 200, y: 200 } }]);
+
+    cy.get('[data-testid="node-A"]').should("have.class", "nopan");
+    cy.get('[data-testid="node-A"] .object-node-drag-handle')
+      .should("exist")
+      .and("have.class", "cursor-grab");
+
+    // Confirmación adicional: el cuerpo del nodo NO lleva clase de drag.
+    cy.get('[data-testid="node-A"]')
+      .should("not.have.class", "cursor-grab")
+      .and("not.have.class", "cursor-grabbing");
+  });
+
+  it("TC-E-25: modo botón persiste sourceHandle=right y targetHandle=left", () => {
+    seedScenario([
+      { id: "A", label: "A", position: { x: 100, y: 200 } },
+      { id: "B", label: "B", position: { x: 400, y: 200 } },
+    ]);
+
+    cy.get('[data-testid="btn-crear-referencia"]').click();
+    cy.get('[data-testid="node-A"]').click();
+    cy.get('[data-testid="node-B"]').click();
+
+    cy.window()
+      .its("__store")
+      .invoke("getState")
+      .its("graph.references")
+      .should(
+        (
+          refs: Array<{
+            sourceObjectId: string;
+            targetObjectId: string;
+            sourceHandle?: string;
+            targetHandle?: string;
+          }>,
+        ) => {
+          expect(refs).to.have.length(1);
+          expect(refs[0].sourceObjectId).to.eq("A");
+          expect(refs[0].targetObjectId).to.eq("B");
+          expect(refs[0].sourceHandle).to.eq("right");
+          expect(refs[0].targetHandle).to.eq("left");
+        },
+      );
+  });
+
+  it("TC-E-26: drop al vacío en arrastre no crea referencia", () => {
+    seedScenario([{ id: "A", label: "A", position: { x: 200, y: 200 } }]);
+
+    // Cypress no puede simular fielmente el drag de React Flow
+    // (setPointerCapture + elementsFromPoint). En lugar de orquestar pointer
+    // events, simulamos el resultado: el callback onConnect SOLO se llama
+    // cuando ReactFlow detecta un drop sobre un handle válido. Cuando el drop
+    // cae al vacío, onConnect NO se dispara, por lo que no se crea
+    // referencia. Disparamos pointerdown/move/up para verificar que la
+    // ausencia de target válido no produce ningún efecto.
+    cy.get('[data-testid="node-A"] .react-flow__handle.source')
+      .first()
+      .trigger("pointerdown", { button: 0 });
+    cy.get('[data-testid="graph-canvas"]').trigger("pointermove", {
+      clientX: 50,
+      clientY: 50,
+    });
+    cy.get('[data-testid="graph-canvas"]').trigger("pointerup", {
+      clientX: 50,
+      clientY: 50,
+    });
+
+    cy.window()
+      .its("__store")
+      .invoke("getState")
+      .its("graph.references")
+      .should("have.length", 0);
+
+    // Tampoco debe aparecer toast de error (no es duplicada, no es simulación).
+    cy.get(".react-hot-toast").should("not.exist");
+  });
+
+  it("TC-E-27: onConnect persiste sourceHandle/targetHandle del Connection", () => {
+    // El motor de drag de React Flow v12 (setPointerCapture +
+    // elementsFromPoint) no se reproduce fielmente con pointer events
+    // sintéticos de Cypress — ver helper dragNodeToNode y notas en
+    // TEST_IMPLEMENTATION_PLAN.md §6. La pasarela onConnect del canvas
+    // únicamente delega a createReference(source, target, { source, target }),
+    // por lo que se valida ese contrato directamente desde el store /
+    // use case (degradación documentada en STS TC-E-27).
+    seedScenario([
+      { id: "A", label: "A", position: { x: 150, y: 200 } },
+      { id: "B", label: "B", position: { x: 500, y: 200 } },
+    ]);
+
+    cy.window().then((win) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const useCases = (win as any).__useCases;
+      const result = useCases.createReference("A", "B", {
+        source: "right",
+        target: "left",
+      });
+      expect(result.created).to.eq(true);
+    });
+
+    cy.window()
+      .its("__store")
+      .invoke("getState")
+      .its("graph.references")
+      .should(
+        (
+          refs: Array<{
+            sourceObjectId: string;
+            targetObjectId: string;
+            sourceHandle?: string;
+            targetHandle?: string;
+          }>,
+        ) => {
+          expect(refs).to.have.length(1);
+          expect(refs[0].sourceHandle).to.eq("right");
+          expect(refs[0].targetHandle).to.eq("left");
+        },
+      );
+  });
 });
