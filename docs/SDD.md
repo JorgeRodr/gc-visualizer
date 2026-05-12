@@ -1,4 +1,4 @@
-# GC Visualizer — Software Design Description (SDD v1.2)
+# GC Visualizer — Software Design Description (SDD v1.5)
 
 
 ### Historial de revisiones
@@ -10,6 +10,7 @@
 | 1.2 | 04/05/2026 | Correcciones derivadas del informe VAL2-SDD-v1.1 (H2-01 a H2-04). Actualización de secciones 5.2, 6, 7.1 y 8. | — |
 | 1.3 | 05/05/2026 | Segunda versión. Actualización derivada de SRS v1.4 y UCD v1.4. Eliminadas referencias académicas. Sección 7.4 actualizada: onNodesChange, ConnectionMode.Loose, doble clic, setInterval/delay real, RF-26. Trazabilidad sección 9 actualizada con RF-26 y nuevos elementos de diseño. | — |
 | 1.4 | 10/05/2026 | Ajustes derivados de la sesión de bugfix/mejoras. §3.2.2: MemoryReference añade `sourceHandle?` y `targetHandle?`. §7.4 RI-07: reescrito el modelo de creación de referencias (handles laterales + dragHandle + connectOnClick=false). §7.5 nueva: notas de presentación (drag handle dedicado, clase `nopan`, `<ReactFlowProvider>`, `findFreePosition`). §9: actualizada la fila de RF-04 y añadidas filas para RF-16 y para los nuevos casos de uso de presentación. | — |
+| 1.5 | 12/05/2026 | Alineado con SRS v1.5 y UCD v1.5 (sin cambios estructurales de diseño respecto a v1.4). Actualizadas las referencias internas del documento a SRS v1.5. La trazabilidad RF↔elementos de diseño se confirma vigente para los TC-E-22..27 incorporados en STS v1.5. | — |
 
 
 ## 1. Introducción
@@ -19,7 +20,7 @@
 
 El presente documento constituye la Descripción de Diseño del Software (SDD) del proyecto GC Visualizer, elaborado conforme al estándar IEEE 1016:2009. Su objetivo es describir la arquitectura del sistema, el modelo de dominio, las decisiones de diseño relevantes y la estructura de implementación, sirviendo como referencia técnica para el desarrollo y la verificación del proyecto.
 
-Este documento es complementario al SRS GC Visualizer v1.4, que define los requisitos del sistema, y al UCD GC Visualizer v1.4, que describe las interacciones del usuario. El SDD describe cómo se satisfacen esos requisitos mediante decisiones de diseño concretas.
+Este documento es complementario al SRS GC Visualizer v1.5, que define los requisitos del sistema, y al UCD GC Visualizer v1.4, que describe las interacciones del usuario. El SDD describe cómo se satisfacen esos requisitos mediante decisiones de diseño concretas.
 
 
 ### 1.2 Ámbito
@@ -31,7 +32,7 @@ El documento cubre el diseño completo de GC Visualizer: arquitectura por capas,
 
 IEEE Std 1016:2009 — Software Design Descriptions.
 
-SRS GC Visualizer v1.4 — Especificación de Requisitos del Software.
+SRS GC Visualizer v1.5 — Especificación de Requisitos del Software.
 
 UCD GC Visualizer v1.4 — Documento de Casos de Uso.
 
@@ -433,7 +434,7 @@ Los siguientes requisitos técnicos de arquitectura, definidos en el presente do
 
 ## 9. Trazabilidad diseño ↔ requisitos
 
-La siguiente tabla relaciona los elementos de diseño principales con los requisitos funcionales del SRS v1.4 que satisfacen:
+La siguiente tabla relaciona los elementos de diseño principales con los requisitos funcionales del SRS v1.5 que satisfacen:
 
 | Elemento de diseño | Módulo | RF relacionados |
 | --- | --- | --- |

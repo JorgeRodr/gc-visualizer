@@ -1,4 +1,4 @@
-# GC Visualizer — Software Test Plan (STP v1.4)
+# GC Visualizer — Software Test Plan (STP v1.6)
 
 
 ### Historial de revisiones
@@ -11,6 +11,7 @@
 | 1.3 | 04/05/2026 | Correcciones VAL3-STP-v1.2 (H3-01, H3-02, H3-03). | — |
 | 1.4 | 05/05/2026 | Correcciones VAL4-STP-v1.3 (HV-01 a HV-05). Adaptación al Modelo en V. | — |
 | 1.5 | 05/05/2026 | Segunda versión. Actualización derivada de STS v1.3: referencias actualizadas a SRS v1.4, UCD v1.4, SDD v1.3 y STS v1.3. Total de TC-E actualizado de 17 a 21 en tabla de niveles y sección 6.1. | — |
+| 1.6 | 12/05/2026 | Alineado con STS v1.5 y SRS v1.5. Conteos actualizados a 24 TC-U / 18 TC-I / 27 TC-E (69 casos totales). Rangos de la sección 6.1 ampliados a TC-U-01..24, TC-I-01..18, TC-E-01..27. Referencias cruzadas a STS y SRS actualizadas. | — |
 
 
 ## 1. Introducción
@@ -20,12 +21,12 @@
 
 El presente documento define el plan de pruebas del sistema GC Visualizer, elaborado conforme al estándar IEEE 829:2008. Su objetivo es describir la estrategia general de pruebas, los niveles de prueba adoptados, los criterios de entrada y salida de cada nivel, el entorno de ejecución, la integración con el pipeline de CI/CD y la gestión de defectos.
 
-Este documento es complementario al STS GC Visualizer v1.3, que especifica los casos de prueba concretos. El STP define el marco en el que esos casos se ejecutan y gestionan.
+Este documento es complementario al STS GC Visualizer v1.5, que especifica los casos de prueba concretos. El STP define el marco en el que esos casos se ejecutan y gestionan.
 
 
 ### 1.2 Ámbito
 
-El plan cubre las pruebas del sistema GC Visualizer en su totalidad: dominio, algoritmo, integración entre capas e interfaz de usuario. Las pruebas de compatibilidad con navegadores obsoletos o no modernos quedan fuera del ámbito. La compatibilidad con versiones actuales de Chrome, Firefox, Edge y Safari, exigida por RNF-07 del SRS v1.4, se cubre mediante la nota de compatibilidad de la sección 3.2. Las pruebas de rendimiento bajo carga extrema (grafos de más de 50 objetos) quedan igualmente fuera del ámbito, en coherencia con el umbral establecido en RNF-03 del SRS v1.4.
+El plan cubre las pruebas del sistema GC Visualizer en su totalidad: dominio, algoritmo, integración entre capas e interfaz de usuario. Las pruebas de compatibilidad con navegadores obsoletos o no modernos quedan fuera del ámbito. La compatibilidad con versiones actuales de Chrome, Firefox, Edge y Safari, exigida por RNF-07 del SRS v1.5, se cubre mediante la nota de compatibilidad de la sección 3.2. Las pruebas de rendimiento bajo carga extrema (grafos de más de 50 objetos) quedan igualmente fuera del ámbito, en coherencia con el umbral establecido en RNF-03 del SRS v1.5.
 
 
 ### 1.3 Referencias
@@ -34,13 +35,13 @@ IEEE Std 829:2008 — Standard for Software and System Test Documentation.
 
 ISO/IEC/IEEE 29119 — Software Testing.
 
-SRS GC Visualizer v1.4 — Especificación de Requisitos del Software.
+SRS GC Visualizer v1.5 — Especificación de Requisitos del Software.
 
 UCD GC Visualizer v1.4 — Documento de Casos de Uso.
 
 SDD GC Visualizer v1.3 — Documento de Diseño del Software.
 
-STS GC Visualizer v1.3 — Especificación de Casos de Prueba.
+STS GC Visualizer v1.5 — Especificación de Casos de Prueba.
 
 
 ## 2. Estrategia general de pruebas
@@ -54,27 +55,27 @@ La estrategia se articula en tres principios:
 
 Independencia del dominio: las pruebas unitarias verifican el dominio sin dependencias de React ni de la interfaz, en coherencia con la arquitectura Clean Architecture del SDD.
 
-Trazabilidad completa: cada caso de prueba del STS está trazado a al menos un requisito funcional del SRS v1.4.
+Trazabilidad completa: cada caso de prueba del STS está trazado a al menos un requisito funcional del SRS v1.5.
 
 Automatización total: los tres niveles de prueba se ejecutan automáticamente en el pipeline de CI/CD al completar cada fase de implementación, garantizando la verificación sistemática sin intervención manual.
 
 
 ### 2.2 Niveles de prueba
 
-El sistema contempla tres niveles de prueba, definidos en detalle en el STS v1.3:
+El sistema contempla tres niveles de prueba, definidos en detalle en el STS v1.5:
 
 | Nivel | Prefijo | Herramienta | N.º TC | Alcance | Cuándo se ejecuta |
 | --- | --- | --- | --- | --- | --- |
-| Pruebas unitarias | TC-U-XX | Jest | 14 | Dominio puro: entidades, algoritmo Mark & Sweep, validador de grafo. Sin dependencias externas. | En cada push/PR al repositorio. |
-| Pruebas de integración | TC-I-XX | Jest | 10 | Interacción entre capas: casos de uso, store, serialización JSON. | En cada push/PR al repositorio. |
-| Pruebas end-to-end | TC-E-XX | Cypress | 21 | Flujos completos de usuario desde el navegador. | Al completar la fase de implementación. El pipeline CI/CD actúa como mecanismo de ejecución automática al cerrar la fase. |
+| Pruebas unitarias | TC-U-XX | Jest | 24 | Dominio puro: entidades, algoritmo Mark & Sweep, validador de grafo, utilidad `findFreePosition`, factory de `MemoryReference` con handles. Sin dependencias externas. | En cada push/PR al repositorio. |
+| Pruebas de integración | TC-I-XX | Jest | 18 | Interacción entre capas: casos de uso, store, serialización JSON (incluida la persistencia de handles), guard de grafo vacío. | En cada push/PR al repositorio. |
+| Pruebas end-to-end | TC-E-XX | Cypress | 27 | Flujos completos de usuario desde el navegador, incluida la vista post-recolección, los guards de grafo vacío y los handles de aristas. | Al completar la fase de implementación. El pipeline CI/CD actúa como mecanismo de ejecución automática al cerrar la fase. |
 
 
 ### 2.3 Cobertura objetivo
 
 Los objetivos de cobertura son:
 
-Cobertura de requisitos: el 100% de los RF del SRS v1.4 tiene al menos un caso de prueba en el STS v1.3.
+Cobertura de requisitos: el 100% de los RF del SRS v1.5 tiene al menos un caso de prueba en el STS v1.5.
 
 Cobertura de ramas del algoritmo: el 100% de los casos estructurales del algoritmo Mark & Sweep (cadena lineal, árbol, ciclo alcanzable, ciclo inalcanzable, múltiples raíces, autorreferencia, escenario vacío, escenario sin raíces) tiene un caso de prueba unitario.
 
@@ -112,7 +113,7 @@ Las pruebas end-to-end con Cypress requieren la aplicación en ejecución. Los r
 
 Convención de selectores: los componentes React que sean objeto de pruebas e2e incluirán el atributo data-testid con un identificador descriptivo (por ejemplo, data-testid="btn-ejecutar", data-testid="node-objeto"). Los selectores Cypress utilizarán exclusivamente estos atributos, evitando selectores CSS frágiles dependientes de la estructura interna de los componentes.
 
-Compatibilidad de navegadores: el pipeline CI/CD ejecuta las pruebas e2e sobre Chromium por defecto, en cumplimiento del RNF-07 del SRS v1.4, se recomienda ejecutar TC-E-10 (simulación completa) y TC-E-15 (importación/exportación) sobre Firefox y Edge en entorno local antes de cada release.
+Compatibilidad de navegadores: el pipeline CI/CD ejecuta las pruebas e2e sobre Chromium por defecto, en cumplimiento del RNF-07 del SRS v1.5, se recomienda ejecutar TC-E-10 (simulación completa) y TC-E-15 (importación/exportación) sobre Firefox y Edge en entorno local antes de cada release.
 
 
 ### 3.3 Entorno de CI/CD
@@ -137,7 +138,7 @@ Las condiciones que deben cumplirse antes de iniciar la ejecución de cada nivel
 
 El código del módulo bajo prueba ha sido implementado y compilado sin errores de TypeScript.
 
-Los casos de prueba del STS v1.3 correspondientes al nivel han sido implementados en Jest.
+Los casos de prueba del STS v1.5 correspondientes al nivel han sido implementados en Jest.
 
 Las dependencias del proyecto están instaladas (npm install completado sin errores).
 
@@ -148,7 +149,7 @@ Las pruebas unitarias e de integración de la fase de implementación actual han
 
 La aplicación arranca correctamente en modo desarrollo o preview sin errores en consola.
 
-Los casos de prueba del STS v1.3 correspondientes al nivel e2e han sido implementados en Cypress.
+Los casos de prueba del STS v1.5 correspondientes al nivel e2e han sido implementados en Cypress.
 
 
 ### 4.2 Criterios de salida
@@ -160,7 +161,7 @@ Definición de fallo justificado: se considera fallo justificado aquel caso de p
 
 #### 4.2.1 Pruebas unitarias e integración
 
-El 100% de los casos de prueba TC-U y TC-I del STS v1.3 han sido ejecutados.
+El 100% de los casos de prueba TC-U y TC-I del STS v1.5 han sido ejecutados.
 
 El 0% de los casos de prueba presenta fallos no justificados.
 
@@ -171,7 +172,7 @@ El informe de cobertura ha sido generado y publicado como artefacto del pipeline
 
 #### 4.2.2 Pruebas end-to-end
 
-El 100% de los casos de prueba TC-E del STS v1.3 han sido ejecutados.
+El 100% de los casos de prueba TC-E del STS v1.5 han sido ejecutados.
 
 El 0% de los casos de prueba presenta fallos no justificados.
 
@@ -223,9 +224,9 @@ Las pruebas se ejecutan en el siguiente orden, respetando las dependencias entre
 
 | Orden | Nivel | Herramienta | Condición de inicio |
 | --- | --- | --- | --- |
-| 1 | Pruebas unitarias (TC-U-01 a TC-U-14) | Jest | Primer nivel. Independientes. Se ejecutan al completar la codificación de cada módulo. En el pipeline CI/CD, se disparan automáticamente ante cada integración de código. |
-| 2 | Pruebas de integración (TC-I-01 a TC-I-10) | Jest | Segundo nivel. Requieren que las unitarias pasen. |
-| 3 | Pruebas end-to-end (TC-E-01 a TC-E-21) | Cypress | Tercer nivel. Requieren que las pruebas unitarias e integración de la fase de implementación actual pasen satisfactoriamente. En el pipeline CI/CD, la condición equivalente es que las pruebas del mismo workflow hayan pasado. |
+| 1 | Pruebas unitarias (TC-U-01 a TC-U-24) | Jest | Primer nivel. Independientes. Se ejecutan al completar la codificación de cada módulo. En el pipeline CI/CD, se disparan automáticamente ante cada integración de código. |
+| 2 | Pruebas de integración (TC-I-01 a TC-I-18) | Jest | Segundo nivel. Requieren que las unitarias pasen. |
+| 3 | Pruebas end-to-end (TC-E-01 a TC-E-27) | Cypress | Tercer nivel. Requieren que las pruebas unitarias e integración de la fase de implementación actual pasen satisfactoriamente. En el pipeline CI/CD, la condición equivalente es que las pruebas del mismo workflow hayan pasado. |
 
 
 ### 6.2 Estrategia de regresión
@@ -248,7 +249,7 @@ En caso de necesidad de ejecución manual fuera del pipeline, los casos de prueb
 
 ## 7. Relación con el STS
 
-El presente STP referencia el STS GC Visualizer v1.3 como documento de especificación de casos de prueba. La relación entre ambos documentos es la siguiente:
+El presente STP referencia el STS GC Visualizer v1.5 como documento de especificación de casos de prueba. La relación entre ambos documentos es la siguiente:
 
 | Sección STP | Sección STS | Descripción |
 | --- | --- | --- |
