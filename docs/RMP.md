@@ -1,4 +1,4 @@
-# GC Visualizer — Risk Management Plan (RMP v1.1)
+# GC Visualizer — Risk Management Plan (RMP v1.3)
 
 
 ### Historial de revisiones
@@ -8,6 +8,7 @@
 | 1.0 | 04/05/2026 | Versión inicial del RMP. | — |
 | 1.1 | 04/05/2026 | Correcciones VAL-RMP-v1.0 (H-01 a H-04). Eliminadas referencias al contexto académico. Categoría 'Académicos' renombrada a 'Documentación y trazabilidad'. Reformulados R-09, R-10, R-11 y R-13. | — |
 | 1.2 | 05/05/2026 | Segunda versión. Actualización de referencias a SRS v1.4, SDD v1.3, STP v1.5 y STS v1.3. | — |
+| 1.3 | 12/05/2026 | Alineado con SRS v1.5, SDD v1.4, STP v1.6 y STS v1.5. R-07 actualizado con la limitación conocida de pointer events sintéticos de Cypress contra el motor de drag de React Flow v12 (mitigada en TC-E-24 y TC-E-27 vía verificación del contrato subyacente). R-08 referencia el nuevo set de 24 TC-U / 18 TC-I que cubre los 8 casos estructurales más los flujos de handles y guards de grafo vacío. | — |
 
 
 ## 1. Introducción
@@ -29,13 +30,13 @@ ISO 31000:2018 — Risk Management. Guidelines.
 
 IEEE Std 16085:2021 — Systems and Software Engineering — Risk Management.
 
-SRS GC Visualizer v1.4 — Especificación de Requisitos del Software.
+SRS GC Visualizer v1.5 — Especificación de Requisitos del Software.
 
-SDD GC Visualizer v1.3 — Documento de Diseño del Software.
+SDD GC Visualizer v1.4 — Documento de Diseño del Software.
 
-STP GC Visualizer v1.5 — Plan de Pruebas del Software.
+STP GC Visualizer v1.6 — Plan de Pruebas del Software.
 
-STS GC Visualizer v1.3 — Especificación de Casos de Prueba.
+STS GC Visualizer v1.5 — Especificación de Casos de Prueba.
 
 
 ## 2. Marco de gestión de riesgos
@@ -115,7 +116,7 @@ El registro recoge los 14 riesgos identificados para el proyecto GC Visualizer, 
 | Impacto | Alta |
 | Exposición | Alta |
 | Estrategia | Mitigar |
-| Plan de mitigación | El dominio está completamente separado de la presentación (SDD RT-02), lo que permite testearlo de forma unitaria e independiente. El STS v1.3 cubre los 8 casos estructurales del algoritmo (TC-U-06 a TC-U-14). Las garantías formales del algoritmo están documentadas en el SDD v1.3 sección 4.5. |
+| Plan de mitigación | El dominio está completamente separado de la presentación (SDD RT-02), lo que permite testearlo de forma unitaria e independiente. El STS v1.5 cubre los 8 casos estructurales del algoritmo (TC-U-06 a TC-U-14) y añade cobertura específica de la factory `MemoryReference` con handles (TC-U-22 a TC-U-24) y de la utilidad `findFreePosition` (TC-U-15 a TC-U-21). Las garantías formales del algoritmo están documentadas en el SDD v1.4 sección 4.5. |
 | Plan de contingencia | Si se detecta un error en la fase de pruebas unitarias, corregir el módulo markAndSweep.ts y re-ejecutar el conjunto completo de pruebas unitarias antes de avanzar a integración. |
 | Estado | Activo |
 
@@ -129,7 +130,7 @@ El registro recoge los 14 riesgos identificados para el proyecto GC Visualizer, 
 | Impacto | Alta |
 | Exposición | Media |
 | Estrategia | Mitigar |
-| Plan de mitigación | El algoritmo usa un conjunto de nodos visitados (patrón DFS con conjunto de visitados) que previene la revisita. TC-U-09 y TC-U-14 verifican específicamente este comportamiento. La garantía de terminación está documentada en SDD v1.3 sección 4.5. |
+| Plan de mitigación | El algoritmo usa un conjunto de nodos visitados (patrón DFS con conjunto de visitados) que previene la revisita. TC-U-09 y TC-U-14 verifican específicamente este comportamiento. La garantía de terminación está documentada en SDD v1.4 sección 4.5. |
 | Plan de contingencia | Si se detecta un bucle en tiempo de ejecución, añadir un límite máximo de iteraciones como salvaguarda de emergencia y abrir un defecto bloqueante. |
 | Estado | Activo |
 
@@ -200,13 +201,13 @@ El registro recoge los 14 riesgos identificados para el proyecto GC Visualizer, 
 
 | Categoría | Pruebas |
 | --- | --- |
-| Descripción | Las pruebas Cypress producen resultados inconsistentes (pasan en unas ejecuciones y fallan en otras) por tiempos de espera variables o selectores frágiles, dificultando la verificación fiable del sistema. |
+| Descripción | Las pruebas Cypress producen resultados inconsistentes (pasan en unas ejecuciones y fallan en otras) por tiempos de espera variables o selectores frágiles, dificultando la verificación fiable del sistema. Limitación conocida adicional: el motor de drag de React Flow v12 (`setPointerCapture` + `elementsFromPoint`) no es reproducible de forma fiable con los pointer events sintéticos de Cypress. |
 | Probabilidad | Media |
 | Impacto | Media |
 | Exposición | Media |
 | Estrategia | Mitigar |
-| Plan de mitigación | El STP v1.5 establece como convención el uso de selectores data-testid en todos los componentes bajo prueba, evitando selectores CSS frágiles. Los tiempos de espera de Cypress se configuran mediante cy.intercept y cy.wait para operaciones asíncronas. Cada TC-E parte de un estado limpio de la aplicación (precondición explícita). |
-| Plan de contingencia | Si una prueba es persistentemente inestable, marcarla como pendiente de estabilización, documentar el problema como issue y ejecutar el TC manualmente hasta que se estabilice. |
+| Plan de mitigación | El STP v1.6 establece como convención el uso de selectores data-testid en todos los componentes bajo prueba, evitando selectores CSS frágiles. Los tiempos de espera de Cypress se configuran mediante cy.intercept y cy.wait para operaciones asíncronas. Cada TC-E parte de un estado limpio de la aplicación (precondición explícita). Para los TC sensibles al drag de React Flow (TC-E-24, TC-E-27) la mitigación consiste en verificar el contrato subyacente (clases CSS y configuración del nodo en TC-E-24; invocación directa de `createReference` con los handles esperados en TC-E-27) en lugar de orquestar pointer events sintéticos. La nota de implementación correspondiente se registra en STS v1.5. |
+| Plan de contingencia | Si una prueba es persistentemente inestable, marcarla como pendiente de estabilización, documentar el problema como issue y ejecutar el TC manualmente hasta que se estabilice. Si se identifica un nuevo flujo dependiente de drag real, evaluar la degradación a integración antes de aceptar inestabilidad en E2E. |
 | Estado | Activo |
 
 
@@ -214,12 +215,12 @@ El registro recoge los 14 riesgos identificados para el proyecto GC Visualizer, 
 
 | Categoría | Pruebas |
 | --- | --- |
-| Descripción | Casos límite del algoritmo no contemplados en el STS v1.3 quedan sin verificar, permitiendo que defectos en el dominio lleguen a la fase de integración o sistema. |
+| Descripción | Casos límite del algoritmo no contemplados en el STS v1.5 quedan sin verificar, permitiendo que defectos en el dominio lleguen a la fase de integración o sistema. |
 | Probabilidad | Baja |
 | Impacto | Alta |
 | Exposición | Media |
 | Estrategia | Mitigar |
-| Plan de mitigación | El STS v1.3 cubre los 8 casos estructurales del CP original: cadena lineal, árbol, ciclo alcanzable, ciclo inalcanzable, múltiples raíces, autorreferencia, escenario vacío y escenario sin raíces. El informe de cobertura de Jest identifica ramas no cubiertas. |
+| Plan de mitigación | El STS v1.5 cubre los 8 casos estructurales del CP original: cadena lineal, árbol, ciclo alcanzable, ciclo inalcanzable, múltiples raíces, autorreferencia, escenario vacío y escenario sin raíces. Se complementa con TC-I-17 y TC-I-18 (segunda línea de defensa frente a grafo vacío en `runSimulation`) y con TC-U-22 a TC-U-24 (factory `MemoryReference` con handles). El informe de cobertura de Jest identifica ramas no cubiertas. |
 | Plan de contingencia | Si el informe de cobertura revela ramas del algoritmo sin cubrir, añadir los TC unitarios necesarios antes de avanzar a la siguiente fase de implementación. |
 | Estado | Activo |
 
@@ -236,7 +237,7 @@ El registro recoge los 14 riesgos identificados para el proyecto GC Visualizer, 
 | Impacto | Media |
 | Exposición | Media |
 | Estrategia | Mitigar |
-| Plan de mitigación | El SDD v1.3 documenta explícitamente todas las decisiones de diseño relevantes con su justificación (secciones 2.1, 2.4 y 5.1). La nota sobre el carácter iterativo del diseño está recogida en el SDD v1.3 sección 5.1. El proceso de validación aplicado a cada documento garantiza la coherencia entre las decisiones documentadas. |
+| Plan de mitigación | El SDD v1.4 documenta explícitamente todas las decisiones de diseño relevantes con su justificación (secciones 2.1, 2.4, 5.1 y 7.5). La nota sobre el carácter iterativo del diseño está recogida en el SDD v1.4 sección 5.1. El proceso de validación aplicado a cada documento garantiza la coherencia entre las decisiones documentadas. |
 | Plan de contingencia | Si durante la revisión del sistema se detecta que alguna decisión de diseño carece de justificación formal, añadir la justificación en el SDD antes de cerrar la fase de implementación correspondiente. |
 | Estado | Activo |
 
@@ -264,7 +265,7 @@ El registro recoge los 14 riesgos identificados para el proyecto GC Visualizer, 
 | Impacto | Alta |
 | Exposición | Media |
 | Estrategia | Mitigar |
-| Plan de mitigación | Los requisitos de interfaz RI-03, RI-05, RI-06 y RI-09 del SRS v1.4 especifican exactamente los elementos visuales necesarios: estados diferenciados, leyenda, explicaciones textuales e indicador de fase. Los TC-E-07, TC-E-09 y TC-E-14 verifican estos elementos. El carácter didáctico está documentado como objetivo principal en el SRS v1.4 sección 1.2. |
+| Plan de mitigación | Los requisitos de interfaz RI-03, RI-05, RI-06 y RI-09 del SRS v1.5 especifican exactamente los elementos visuales necesarios: estados diferenciados, leyenda, explicaciones textuales e indicador de fase. Los TC-E-07, TC-E-09 y TC-E-14 verifican estos elementos. El carácter didáctico está documentado como objetivo principal en el SRS v1.5 sección 1.2. |
 | Plan de contingencia | Si en la revisión de la implementación el valor didáctico no es evidente, revisar primero la leyenda (StateLegend.tsx) y las explicaciones textuales (ExecutionLog.tsx), que son los elementos de mayor impacto didáctico según los requisitos. |
 | Estado | Activo |
 
@@ -295,8 +296,8 @@ El registro recoge los 14 riesgos identificados para el proyecto GC Visualizer, 
 | Impacto | Media |
 | Exposición | Media |
 | Estrategia | Evitar |
-| Plan de mitigación | El SRS v1.4 define explícitamente en la sección 2.2 el alcance excluido: no se implementarán algoritmos alternativos, optimizaciones avanzadas ni análisis de código real. Cualquier idea nueva durante la implementación debe evaluarse contra el alcance del SRS antes de incorporarse. |
-| Plan de contingencia | Si surge una idea de mejora relevante durante la implementación, documentarla en un registro de mejoras futuras del proyecto para su consideración en versiones posteriores del sistema. La prioridad es mantener el alcance del SRS v1.4 y no comprometer la calidad de lo ya especificado. |
+| Plan de mitigación | El SRS v1.5 define explícitamente en la sección 2.2 el alcance excluido: no se implementarán algoritmos alternativos, optimizaciones avanzadas ni análisis de código real. Cualquier idea nueva durante la implementación debe evaluarse contra el alcance del SRS antes de incorporarse. |
+| Plan de contingencia | Si surge una idea de mejora relevante durante la implementación, documentarla en un registro de mejoras futuras del proyecto para su consideración en versiones posteriores del sistema. La prioridad es mantener el alcance del SRS v1.5 y no comprometer la calidad de lo ya especificado. |
 | Estado | Activo |
 
 
