@@ -105,7 +105,7 @@ describe("scenario serialization", () => {
     expect(graph.objects.find((o) => o.id === a.id)?.isRoot).toBe(true);
   });
 
-  test("export includes handle anchors when present on a reference", () => {
+  test("TC-I-13: export includes handle anchors when present on a reference", () => {
     const a = createObject({ label: "A", isRoot: true });
     const b = createObject({ label: "B" });
     createReference(a.id, b.id, { source: "right", target: "left" });
@@ -125,7 +125,7 @@ describe("scenario serialization", () => {
     expect(parsed.references[0].targetHandle).toBe("left");
   });
 
-  test("export omits handle keys when a reference has none (clean JSON)", () => {
+  test("TC-I-14: export omits handle keys when a reference has none (clean JSON)", () => {
     const a = createObject({ label: "A", isRoot: true });
     const b = createObject({ label: "B" });
     createReference(a.id, b.id);
@@ -139,7 +139,7 @@ describe("scenario serialization", () => {
     expect(parsed.references[0]).not.toHaveProperty("targetHandle");
   });
 
-  test("round-trip preserves handle anchors", () => {
+  test("TC-I-15: round-trip preserves handle anchors", () => {
     const a = createObject({ label: "A", isRoot: true });
     const b = createObject({ label: "B" });
     createReference(a.id, b.id, { source: "right", target: "left" });
@@ -153,7 +153,7 @@ describe("scenario serialization", () => {
     expect(ref.targetHandle).toBe("left");
   });
 
-  test("import accepts JSON without handles (predefined-scenario style)", () => {
+  test("TC-I-16: import accepts JSON without handles (predefined-scenario style)", () => {
     const json = JSON.stringify({
       objects: [
         { id: "A", label: "A", isRoot: true, position: { x: 0, y: 0 } },

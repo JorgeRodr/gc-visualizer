@@ -26,6 +26,7 @@ describe("createReference use case", () => {
     expect(refsAB.length).toBe(1);
   });
 
+  // VER SI ESTO SE TESTEA YA EN OTRO LADO
   test("createReference rejects when source or target does not exist", () => {
     const a = createObject({ label: "A" });
 
@@ -37,7 +38,7 @@ describe("createReference use case", () => {
     expect(graph.references.length).toBe(0);
   });
 
-  test("createReference persists optional source/target handle anchors", () => {
+  test("TC-I-11: createReference persists optional source/target handle anchors", () => {
     const a = createObject({ label: "A" });
     const b = createObject({ label: "B" });
 
@@ -54,7 +55,7 @@ describe("createReference use case", () => {
     expect(ref?.targetHandle).toBe("left");
   });
 
-  test("createReference defaults to no handles when not provided", () => {
+  test("TC-I-12: createReference defaults to no handles when not provided", () => {
     const a = createObject({ label: "A" });
     const b = createObject({ label: "B" });
 
