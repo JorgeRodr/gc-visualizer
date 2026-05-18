@@ -1,11 +1,6 @@
 import type { MemoryGraph } from "../models/MemoryGraph";
 import type { SimulationStep } from "../models/SimulationStep";
 
-/**
- * Computes the full Mark & Sweep simulation as a sequence of steps.
- *
- * Pure: does not mutate the input graph (SDD §4.5 — Pureza).
- */
 export const computeMarkAndSweepSteps = (
   graph: MemoryGraph,
 ): SimulationStep[] => {

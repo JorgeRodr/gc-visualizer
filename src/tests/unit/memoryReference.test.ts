@@ -1,7 +1,7 @@
 import { createMemoryReference } from "../../domain/models/MemoryReference";
 
 describe("MemoryReference factory", () => {
-  test("creates a reference with default state and no handles", () => {
+  test("TC-U-22: creates a reference with default state and no handles", () => {
     const ref = createMemoryReference("r1", "A", "B");
 
     expect(ref.id).toBe("r1");
@@ -12,7 +12,7 @@ describe("MemoryReference factory", () => {
     expect(ref.targetHandle).toBeUndefined();
   });
 
-  test("accepts optional source and target handles", () => {
+  test("TC-U-23: accepts optional source and target handles", () => {
     const ref = createMemoryReference("r1", "A", "B", {
       sourceHandle: "right",
       targetHandle: "left",
@@ -22,7 +22,7 @@ describe("MemoryReference factory", () => {
     expect(ref.targetHandle).toBe("left");
   });
 
-  test("accepts only one handle when the other is omitted", () => {
+  test("TC-U-24: accepts only one handle when the other is omitted", () => {
     const ref = createMemoryReference("r1", "A", "B", { sourceHandle: "left" });
 
     expect(ref.sourceHandle).toBe("left");
