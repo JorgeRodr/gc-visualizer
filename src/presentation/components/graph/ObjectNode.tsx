@@ -121,7 +121,7 @@ export function ObjectNode({ id, data, selected }: NodeProps<ObjectNodeType>) {
       */}
       <Handle
         id="left"
-        type="target"
+        type="source"
         position={Position.Left}
         className="!w-2 !h-2 !bg-gray-400 !border-0"
       />
