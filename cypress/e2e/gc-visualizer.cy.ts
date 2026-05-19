@@ -544,6 +544,19 @@ describe("GC Visualizer — End-to-End", () => {
 
     // Object B must remain in the graph.
     cy.get('[data-testid="node-B"]').should("exist");
+
+    // Keyboard Delete must also be blocked, and surface the error toast.
+    cy.get('[data-testid="node-B"]').click();
+    cy.window()
+      .its("__store")
+      .invoke("getState")
+      .its("simulationState.selectedElementId")
+      .should("eq", "B");
+    cy.get("body").trigger("keydown", { key: "Delete" });
+    cy.contains(
+      "No es posible eliminar elementos durante la simulación",
+    ).should("be.visible");
+    cy.get('[data-testid="node-B"]').should("exist");
   });
 
   it("TC-E-17: ejecutar simulación sin raíces definidas", () => {

@@ -271,7 +271,11 @@ export function GraphCanvas() {
       const tag = target?.tagName?.toLowerCase();
       if (tag === "input" || tag === "textarea") return;
       if (e.key !== "Delete" && e.key !== "Backspace") return;
-      if (!selectedElementId || phase !== "idle") return;
+      if (!selectedElementId) return;
+      if (phase !== "idle") {
+        notify.error(TOAST_TEXT.deleteDuringSimulation);
+        return;
+      }
       const result = deleteObject(selectedElementId);
       if (!result.deleted && result.reason === "not-found") {
         deleteReference(selectedElementId);
