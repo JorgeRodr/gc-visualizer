@@ -17,7 +17,11 @@ export const createObject = (
 ): MemoryObject => {
   const { graph } = useSimulationStore.getState();
   const id = crypto.randomUUID();
-  const label = options.label ?? `Objeto ${graph.objects.length + 1}`;
+  const maxN = graph.objects.reduce((max, o) => {
+    const m = /^Objeto (\d+)$/.exec(o.label);
+    return m ? Math.max(max, parseInt(m[1], 10)) : max;
+  }, 0);
+  const label = options.label ?? `Objeto ${maxN + 1}`;
   const obj = createMemoryObject(id, label, {
     isRoot: options.isRoot,
     position: options.position,
