@@ -1,9 +1,9 @@
 import { createInitialSimulationState } from "../../domain/models/SimulationState";
 import {
   isValidationError,
+  type IScenarioParser,
   type ValidationError,
 } from "../../domain/ports/IScenarioParser";
-import { scenarioParser } from "../../infrastructure/json/scenarioParser";
 import { useSimulationStore } from "../simulationStore";
 
 export interface ImportScenarioResult {
@@ -11,8 +11,11 @@ export interface ImportScenarioResult {
   error?: ValidationError;
 }
 
-export const importScenario = (raw: string | unknown): ImportScenarioResult => {
-  const parsed = scenarioParser.parse(raw);
+export const importScenario = (
+  parser: IScenarioParser,
+  raw: string | unknown,
+): ImportScenarioResult => {
+  const parsed = parser.parse(raw);
   if (isValidationError(parsed)) {
     return { imported: false, error: parsed };
   }

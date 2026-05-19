@@ -1,7 +1,7 @@
-import { scenarioSerializer } from "../../infrastructure/json/scenarioSerializer";
+import type { IScenarioSerializer } from "../../domain/ports/IScenarioSerializer";
 import { useSimulationStore } from "../simulationStore";
 
-export const exportScenario = (): string => {
+export const exportScenario = (serializer: IScenarioSerializer): string => {
   const { graph } = useSimulationStore.getState();
-  return scenarioSerializer.serialize(graph);
+  return serializer.serialize(graph);
 };
