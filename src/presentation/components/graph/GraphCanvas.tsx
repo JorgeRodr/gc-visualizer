@@ -112,6 +112,7 @@ export function GraphCanvas() {
         };
         return {
           ...n,
+          position: n.dragging ? n.position : obj.position,
           selected: selectedElementId === n.id,
           data,
         };
@@ -125,8 +126,8 @@ export function GraphCanvas() {
         id: r.id,
         source: r.sourceObjectId,
         target: r.targetObjectId,
-        sourceHandle: r.sourceHandle ?? undefined,
-        targetHandle: r.targetHandle ?? undefined,
+        sourceHandle: r.sourceHandle ?? "right",
+        targetHandle: r.targetHandle ?? "left",
         type: "reference" as const,
         selected: selectedElementId === r.id,
         data: { traversed: r.traversed } satisfies ReferenceEdgeData,
