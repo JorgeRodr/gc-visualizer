@@ -3,6 +3,8 @@ import { createReference } from "../../application/useCases/createReference";
 import { exportScenario } from "../../application/useCases/exportScenario";
 import { importScenario } from "../../application/useCases/importScenario";
 import { useSimulationStore } from "../../application/simulationStore";
+import { scenarioParser } from "../../infrastructure/json/scenarioParser";
+import { scenarioSerializer } from "../../infrastructure/json/scenarioSerializer";
 
 interface ParsedScenario {
   objects: Array<{
@@ -25,7 +27,7 @@ describe("scenario serialization", () => {
     createObject({ label: "C" }); // isolated
     createReference(a.id, b.id);
 
-    const json = exportScenario();
+    const json = exportScenario(scenarioSerializer);
     const parsed = JSON.parse(json) as ParsedScenario;
 
     expect(parsed.objects).toHaveLength(3);
@@ -58,7 +60,7 @@ describe("scenario serialization", () => {
       ],
     });
 
-    const result = importScenario(json);
+    const result = importScenario(scenarioParser, json);
 
     expect(result.imported).toBe(false);
     expect(result.error).toBeDefined();
@@ -68,7 +70,7 @@ describe("scenario serialization", () => {
   });
 
   test("importScenario rejects malformed JSON", () => {
-    const result = importScenario("{not valid json");
+    const result = importScenario(scenarioParser, "{not valid json");
     expect(result.imported).toBe(false);
     expect(result.error?.message).toContain("formato correcto");
   });
@@ -82,7 +84,7 @@ describe("scenario serialization", () => {
       references: [],
     });
 
-    const result = importScenario(json);
+    const result = importScenario(scenarioParser, json);
     expect(result.imported).toBe(false);
     expect(result.error).toBeDefined();
   });
@@ -92,11 +94,11 @@ describe("scenario serialization", () => {
     const b = createObject({ label: "B" });
     createReference(a.id, b.id);
 
-    const json = exportScenario();
+    const json = exportScenario(scenarioSerializer);
     useSimulationStore.getState().reset();
     expect(useSimulationStore.getState().graph.objects).toEqual([]);
 
-    const result = importScenario(json);
+    const result = importScenario(scenarioParser, json);
     expect(result.imported).toBe(true);
 
     const { graph } = useSimulationStore.getState();
@@ -110,7 +112,7 @@ describe("scenario serialization", () => {
     const b = createObject({ label: "B" });
     createReference(a.id, b.id, { source: "right", target: "left" });
 
-    const json = exportScenario();
+    const json = exportScenario(scenarioSerializer);
     const parsed = JSON.parse(json) as {
       references: Array<{
         id: string;
@@ -130,7 +132,7 @@ describe("scenario serialization", () => {
     const b = createObject({ label: "B" });
     createReference(a.id, b.id);
 
-    const json = exportScenario();
+    const json = exportScenario(scenarioSerializer);
     const parsed = JSON.parse(json) as {
       references: Array<Record<string, unknown>>;
     };
@@ -144,9 +146,9 @@ describe("scenario serialization", () => {
     const b = createObject({ label: "B" });
     createReference(a.id, b.id, { source: "right", target: "left" });
 
-    const json = exportScenario();
+    const json = exportScenario(scenarioSerializer);
     useSimulationStore.getState().reset();
-    importScenario(json);
+    importScenario(scenarioParser, json);
 
     const ref = useSimulationStore.getState().graph.references[0];
     expect(ref.sourceHandle).toBe("right");
@@ -164,7 +166,7 @@ describe("scenario serialization", () => {
       ],
     });
 
-    const result = importScenario(json);
+    const result = importScenario(scenarioParser, json);
     expect(result.imported).toBe(true);
 
     const ref = useSimulationStore.getState().graph.references[0];

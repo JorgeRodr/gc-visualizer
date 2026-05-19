@@ -955,23 +955,59 @@ Vuelve la simulación a `idle` y limpia los flags residuales del grafo. La estru
 - `clearScenario`: deja el grafo vacío y la simulación en cero. Usado por el botón "Limpiar escenario".
 - `loadPredefinedScenario(graph)`: reemplaza el grafo por uno externo (ya parseado). Resetea la simulación. Usado al elegir un escenario del selector.
 
-### 6.6 `importScenario` y `exportScenario` — uso de los puertos
+### 6.6 `importScenario` y `exportScenario` — inyección del adaptador
 
 ```ts
-export const importScenario = (raw: string | unknown): ImportScenarioResult => {
-  const parsed = scenarioParser.parse(raw);
-  if (isValidationError(parsed)) return { imported: false, error: parsed };
-  useSimulationStore.setState({ graph: parsed, simulationState: createInitialSimulationState() });
-  return { imported: true };
+// exportScenario.ts
+export const exportScenario = (serializer: IScenarioSerializer): string => {
+  const { graph } = useSimulationStore.getState();
+  return serializer.serialize(graph);
 };
 
-export const exportScenario = (): string => {
-  const { graph } = useSimulationStore.getState();
-  return scenarioSerializer.serialize(graph);
+// importScenario.ts
+export const importScenario = (
+  parser: IScenarioParser,
+  raw: string | unknown,
+): ImportScenarioResult => {
+  const parsed = parser.parse(raw);
+  if (isValidationError(parsed)) return { imported: false, error: parsed };
+  useSimulationStore.setState({
+    graph: parsed,
+    simulationState: createInitialSimulationState(),
+  });
+  return { imported: true };
 };
 ```
 
-`scenarioParser` y `scenarioSerializer` son **adaptadores de infraestructura** que implementan los **puertos** del dominio. La capa de aplicación los consume a través de la interfaz, sin conocer detalles del JSON. Este desacoplamiento es la esencia del patrón puertos/adaptadores.
+#### Por qué se reciben los adapters por parámetro y no se importan directamente
+
+Esta es la pieza más característica del patrón **puertos/adaptadores** ("Hexagonal Architecture") aplicado a esta capa:
+
+1. El **dominio** declara una interfaz (un *puerto*) que describe **qué** capacidad necesita la aplicación: leer un escenario, escribirlo. Las interfaces viven en `domain/ports/IScenarioParser.ts` e `IScenarioSerializer.ts` y no contienen ni una sola línea de implementación.
+
+2. La **infraestructura** ofrece *adaptadores* concretos que implementan esos puertos. En este proyecto el único adaptador disponible es JSON (`infrastructure/json/`), pero mañana podría haber YAML, XML, o uno que persista en `localStorage` — todos ellos válidos mientras respeten el contrato del puerto.
+
+3. La **aplicación** (los casos de uso) **solo conoce el tipo del puerto**. Sus imports son exclusivamente `import type { IScenarioParser } from "../../domain/ports/..."`. Cero referencias a `infrastructure/`. El adaptador concreto llega **por parámetro**.
+
+4. Quien **cablea** un caso de uso con un adaptador concreto es el **composition root**: el punto del sistema que conoce todas las piezas y las une. En este proyecto, ese papel lo hace la propia presentación (`TopBar.tsx`) cuando llama a `exportScenario(scenarioSerializer)` o `importScenario(scenarioParser, raw)`. Esta decisión está justificada en proyectos SPA pequeños: el componente que dispara la acción ya está en el "anillo exterior" y conoce los adaptadores; introducir un módulo intermedio dedicado al cableado añadiría boilerplate sin beneficio real para 2 use cases y 1 caller.
+
+#### Resultado en términos de la regla de dependencias
+
+Tras este diseño:
+
+- `src/application/useCases/exportScenario.ts` e `importScenario.ts` solo importan tipos desde `domain/ports/`. La capa `application/` cumple estrictamente la regla "una capa solo puede depender de capas más internas".
+- Si quisieras sustituir el adaptador JSON por uno de YAML, **bastaría con escribir el adaptador nuevo** que cumpla los puertos y cambiar **dos líneas** en `TopBar.tsx` (los imports). Application no se toca.
+- Verificable de un vistazo: `grep -r "from.*infrastructure" src/application/` no devuelve nada.
+
+#### Trabajo futuro
+
+Hay dos refinamientos en la misma línea que han quedado fuera del alcance actual y se documentan aquí como trayectoria evolutiva, no como deuda crítica:
+
+1. **Extraer un caso de uso `loadPredefinedScenarioById(id, parser)`**. Hoy `TopBar.tsx` parsea directamente el JSON de los escenarios predefinidos (`scenarioParser.parse(entry.data)`) antes de pasarlo a `loadPredefinedScenario`. Esa lógica de parseo es **lógica de aplicación** que está viviendo en presentación. Una versión más limpia extraería un caso de uso que recibe `(id, parser)` y orquesta parseo + carga, dejando a presentación únicamente el papel de seleccionar el id.
+
+2. **Introducir un puerto `IScenarioRepository`**. Los JSON predefinidos se importan hoy como assets directamente en `TopBar.tsx` (`import cadenaLineal from "../../../infrastructure/json/scenarios/cadena-lineal.json"`). Una arquitectura más pura definiría un puerto `IScenarioRepository.loadById(id)`, con un adaptador en infrastructure que resolviera el id al JSON correspondiente. Presentación pediría escenarios al repository por id, sin tocar los assets directamente.
+
+Ambas mejoras refinarían aún más la separación, pero tienen un coste-beneficio bajo en un proyecto del tamaño actual: solo hay 5 escenarios estáticos y un único caller en presentación. Se han priorizado las mejoras con mayor impacto arquitectónico (eliminar la dependencia de application → infrastructure) frente a las puramente estéticas.
 
 ---
 

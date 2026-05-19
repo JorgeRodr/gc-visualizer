@@ -5,6 +5,7 @@ import { importScenario } from "../../../application/useCases/importScenario";
 import { loadPredefinedScenario } from "../../../application/useCases/loadPredefinedScenario";
 import { isValidationError } from "../../../domain/ports/IScenarioParser";
 import { scenarioParser } from "../../../infrastructure/json/scenarioParser";
+import { scenarioSerializer } from "../../../infrastructure/json/scenarioSerializer";
 import cadenaLineal from "../../../infrastructure/json/scenarios/cadena-lineal.json";
 import cicloAlcanzable from "../../../infrastructure/json/scenarios/ciclo-alcanzable.json";
 import cicloInalcanzable from "../../../infrastructure/json/scenarios/ciclo-inalcanzable.json";
@@ -38,7 +39,7 @@ export function TopBar() {
     reader.onload = () => {
       const result = reader.result;
       if (typeof result !== "string") return;
-      const outcome = importScenario(result);
+      const outcome = importScenario(scenarioParser, result);
       if (outcome.imported) {
         notify.info(TOAST_TEXT.scenarioImported);
       } else if (outcome.error) {
@@ -51,7 +52,7 @@ export function TopBar() {
   };
 
   const handleExport = () => {
-    const json = exportScenario();
+    const json = exportScenario(scenarioSerializer);
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
