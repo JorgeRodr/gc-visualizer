@@ -489,28 +489,91 @@ describe("GC Visualizer — End-to-End", () => {
   });
 
   it("TC-E-12: reiniciar tras simulación y volver a ejecutar", () => {
+    // Escenario con A(root)→B + C aislado → C quedará recolectado, lo que
+    // hace observable el efecto de la vista 'tras recolección'.
+    // Posiciones distintas para que los nodos no se solapen en el canvas.
     seedScenario(
       [
-        { id: "A", label: "A", isRoot: true },
-        { id: "B", label: "B" },
+        { id: "A", label: "A", isRoot: true, position: { x: 100, y: 200 } },
+        { id: "B", label: "B", position: { x: 350, y: 200 } },
+        { id: "C", label: "C", position: { x: 600, y: 200 } },
       ],
       [{ id: "r-ab", source: "A", target: "B" }],
     );
 
-    cy.get('[data-testid="btn-ejecutar"]').click();
-    waitForPhaseLabel("Completado");
-
-    cy.get('[data-testid="btn-reiniciar"]').click();
-    cy.get('[data-testid="info-fase-actual"]').should("contain", "Idle");
-
-    // Run again and assert same outcome.
+    // Primera ejecución: capturamos el resultado para comparar con la segunda
+    // y verificamos que la precondición del TC se cumple (objetos marcados Y
+    // al menos uno recolectado).
+    let firstMarkedIds: string[] = [];
     cy.get('[data-testid="btn-ejecutar"]').click();
     waitForPhaseLabel("Completado");
     cy.window().then((win) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const state = (win as any).__store.getState();
       const last = state.simulationState.steps[state.simulationState.steps.length - 1];
+      firstMarkedIds = [...last.markedIds].sort();
+      expect(firstMarkedIds).to.include.members(["A", "B"]);
+      expect(firstMarkedIds).not.to.include("C"); // C recolectado: precondición cumplida.
+    });
+
+    // (1) Activar la vista 'Grafo tras recolección'. Sanity-check: C desaparece.
+    cy.window().then((win) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (win as any).__store.getState().updateSimulationState({ showCollectedView: true });
+    });
+    cy.get('[data-testid="node-C"]').should("not.exist");
+
+    // (2) Pulsar Reiniciar.
+    cy.get('[data-testid="btn-reiniciar"]').click();
+    cy.get('[data-testid="info-fase-actual"]').should("contain", "Idle");
+
+    // (3) El sistema vuelve automáticamente a la vista completa: C reaparece.
+    cy.window()
+      .its("__store")
+      .invoke("getState")
+      .its("simulationState.showCollectedView")
+      .should("eq", false);
+    cy.get('[data-testid="node-C"]').should("exist");
+
+    // (4) Las marcas desaparecen pero el escenario se conserva (objetos,
+    // referencias e identidad de cada nodo — incluido isRoot).
+    cy.window().then((win) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const state = (win as any).__store.getState();
+      const objects = state.graph.objects;
+      expect(objects).to.have.length(3);
+      expect(state.graph.references).to.have.length(1);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const a = objects.find((o: any) => o.id === "A");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const b = objects.find((o: any) => o.id === "B");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const c = objects.find((o: any) => o.id === "C");
+      expect(a?.isRoot).to.equal(true);
+      expect(b?.isRoot).to.equal(false);
+      expect(c?.isRoot).to.equal(false);
+      for (const obj of objects) {
+        expect(obj.marked).to.equal(false);
+        expect(obj.alive).to.equal(true);
+        expect(obj.visitedOrder).to.equal(null);
+      }
+      expect(state.simulationState.steps).to.deep.equal([]);
+      expect(state.simulationState.logs).to.deep.equal([]);
+    });
+
+    // (5) Re-ejecutar.
+    cy.get('[data-testid="btn-ejecutar"]').click();
+    waitForPhaseLabel("Completado");
+
+    // (6) El resultado es idéntico al de la primera ejecución.
+    cy.window().then((win) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const state = (win as any).__store.getState();
+      const last = state.simulationState.steps[state.simulationState.steps.length - 1];
+      const secondMarkedIds = [...last.markedIds].sort();
+      expect(secondMarkedIds).to.deep.equal(firstMarkedIds);
       expect(last.markedIds).to.include.members(["A", "B"]);
+      expect(last.markedIds).not.to.include("C");
     });
   });
 
