@@ -95,7 +95,7 @@ describe("runSimulation use case", () => {
     expect(result.reason).toBe("no-roots");
   });
 
-  test("runSimulation rejects an empty graph as a second line of defense", () => {
+  test("TC-I-17: runSimulation rejects an empty graph as a second line of defense", () => {
     // Empty graph: no objects, no references.
     const before = useSimulationStore.getState().simulationState;
 
@@ -107,7 +107,7 @@ describe("runSimulation use case", () => {
     expect(useSimulationStore.getState().simulationState).toEqual(before);
   });
 
-  test("runSimulation rejects empty graph even with skipRootCheck=true", () => {
+  test("TC-I-18: runSimulation rejects empty graph even with skipRootCheck=true", () => {
     const result = runSimulation({ skipRootCheck: true });
     expect(result.ran).toBe(false);
     expect(result.reason).toBe("empty-graph");
