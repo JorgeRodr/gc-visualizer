@@ -278,6 +278,11 @@ describe("GC Visualizer — End-to-End", () => {
       ],
     );
 
+    // Estado inicial en el canvas: A es raíz (bg oscuro), B y C normales.
+    cy.get('[data-testid="node-A"]').should("have.class", "bg-slate-800");
+    cy.get('[data-testid="node-B"]').should("have.class", "bg-white");
+    cy.get('[data-testid="node-C"]').should("have.class", "bg-white");
+
     cy.get('[data-testid="btn-paso-siguiente"]').click();
     cy.get('[data-testid="info-explicacion"]').should("not.be.empty");
     cy.window().its("__store").invoke("getState").its("simulationState.currentStep").should("eq", 0);
@@ -286,11 +291,29 @@ describe("GC Visualizer — End-to-End", () => {
     cy.window().its("__store").invoke("getState").its("simulationState.currentStep").should("eq", 1);
     cy.get('[data-testid="info-elemento-seleccionado"]').should("contain", "A");
 
+    // Tras avanzar a "visitando A": A pasa al estilo "processing" (borde naranja).
+    cy.get('[data-testid="node-A"]').should("have.class", "border-orange-400");
+    cy.get('[data-testid="node-A"]').should("not.have.class", "bg-slate-800");
+    cy.get('[data-testid="node-B"]').should("not.have.class", "border-orange-400");
+
     cy.get('[data-testid="btn-paso-siguiente"]').click();
     cy.get('[data-testid="info-elemento-seleccionado"]').should("contain", "B");
 
+    // Tras avanzar a "visitando B": A vuelve a "root", B pasa a "processing", C sigue normal.
+    cy.get('[data-testid="node-A"]').should("have.class", "bg-slate-800");
+    cy.get('[data-testid="node-A"]').should("not.have.class", "border-orange-400");
+    cy.get('[data-testid="node-B"]').should("have.class", "border-orange-400");
+    cy.get('[data-testid="node-C"]').should("have.class", "bg-white");
+    cy.get('[data-testid="node-C"]').should("not.have.class", "border-orange-400");
+
     cy.get('[data-testid="btn-paso-anterior"]').click();
     cy.get('[data-testid="info-elemento-seleccionado"]').should("contain", "A");
+
+    // Tras retroceder a "visitando A": A vuelve a "processing", B vuelve a "normal".
+    cy.get('[data-testid="node-A"]').should("have.class", "border-orange-400");
+    cy.get('[data-testid="node-A"]').should("not.have.class", "bg-slate-800");
+    cy.get('[data-testid="node-B"]').should("have.class", "bg-white");
+    cy.get('[data-testid="node-B"]').should("not.have.class", "border-orange-400");
   });
 
   it("TC-E-08: ejecución automática con pausa, reanudación y control de velocidad", () => {
