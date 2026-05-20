@@ -137,6 +137,27 @@ describe("GC Visualizer — End-to-End", () => {
     cy.contains(
       "Objeto eliminado. También se eliminaron 2 referencias asociadas.",
     ).should("be.visible");
+
+    // Vía del teclado: el mismo toast también debe aparecer al pulsar Delete.
+    // Usamos un escenario con 1 referencia para que el texto del nuevo toast
+    // sea distinguible del que sigue visible del bloque anterior.
+    seedScenario(
+      [
+        { id: "X", label: "X", position: { x: 100, y: 200 } },
+        { id: "Y", label: "Y", position: { x: 400, y: 200 } },
+      ],
+      [{ id: "r-xy", source: "X", target: "Y" }],
+    );
+
+    cy.get('[data-testid="node-X"]').click();
+    cy.get("body").trigger("keydown", { key: "Delete" });
+
+    cy.get('[data-testid="node-X"]').should("not.exist");
+    cy.get('[data-testid="edge-X-Y"]').should("not.exist");
+
+    cy.contains(
+      "Objeto eliminado. También se eliminaron 1 referencias asociadas.",
+    ).should("be.visible");
   });
 
   it("TC-E-03: editar etiqueta con doble clic y bloqueo durante simulación", () => {

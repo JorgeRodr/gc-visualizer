@@ -277,7 +277,11 @@ export function GraphCanvas() {
         return;
       }
       const result = deleteObject(selectedElementId);
-      if (!result.deleted && result.reason === "not-found") {
+      if (result.deleted) {
+        if (result.deletedReferences > 0) {
+          notify.info(TOAST_TEXT.objectDeletedWithRefs(result.deletedReferences));
+        }
+      } else if (result.reason === "not-found") {
         deleteReference(selectedElementId);
       }
       setSelectedElement(null);
