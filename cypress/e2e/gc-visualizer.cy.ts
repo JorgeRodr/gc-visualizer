@@ -740,13 +740,26 @@ describe("GC Visualizer — End-to-End", () => {
   // --------------------------------------------------------------------------
 
   it("TC-E-18: crear referencia por arrastre desde origen hasta destino", () => {
+    // A se marca como raíz para poder comprobar más abajo que la referencia
+    // recién creada se utiliza durante la simulación (B alcanzable desde A).
     seedScenario([
-      { id: "A", label: "A", position: { x: 100, y: 200 } },
+      { id: "A", label: "A", isRoot: true, position: { x: 100, y: 200 } },
       { id: "B", label: "B", position: { x: 400, y: 200 } },
     ]);
 
     dragNodeToNode("A", "B");
     cy.get('[data-testid="edge-A-B"]', { timeout: 6000 }).should("exist");
+
+    // La referencia es navegable y funciona en la simulación: tras ejecutar,
+    // B queda marcado por ser alcanzable a través de la arista recién creada.
+    cy.get('[data-testid="btn-ejecutar"]').click();
+    waitForPhaseLabel("Completado");
+    cy.window().then((win) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const state = (win as any).__store.getState();
+      const last = state.simulationState.steps[state.simulationState.steps.length - 1];
+      expect(last.markedIds).to.include.members(["A", "B"]);
+    });
   });
 
   it("TC-E-19: crear referencia por botón modo conexión y cancelar con Escape", () => {
