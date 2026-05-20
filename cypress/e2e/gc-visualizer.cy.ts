@@ -426,16 +426,25 @@ describe("GC Visualizer — End-to-End", () => {
   });
 
   it("TC-E-11: vista tras recolección y retorno a vista completa", () => {
+    // Escenario con un objeto aislado (C) que quedará recolectado tras la
+    // simulación, lo que permite observar el efecto visual del toggle.
+    // Posiciones distintas para que los nodos no se solapen en el canvas.
     seedScenario(
       [
-        { id: "A", label: "A", isRoot: true },
-        { id: "B", label: "B" },
+        { id: "A", label: "A", isRoot: true, position: { x: 100, y: 200 } },
+        { id: "B", label: "B", position: { x: 350, y: 200 } },
+        { id: "C", label: "C", position: { x: 600, y: 200 } },
       ],
       [{ id: "r-ab", source: "A", target: "B" }],
     );
 
     cy.get('[data-testid="btn-ejecutar"]').click();
     waitForPhaseLabel("Completado");
+
+    // Antes de activar la vista: los tres nodos están en el canvas.
+    cy.get('[data-testid="node-A"]').should("exist");
+    cy.get('[data-testid="node-B"]').should("exist");
+    cy.get('[data-testid="node-C"]').should("exist");
 
     // Toggle the "graph after collection" view via the store flag.
     cy.window().then((win) => {
@@ -449,6 +458,19 @@ describe("GC Visualizer — End-to-End", () => {
       .its("simulationState.showCollectedView")
       .should("eq", true);
 
+    // Efecto visual al activar: C (recolectado) desaparece del canvas;
+    // A y B (alcanzables) permanecen visibles.
+    cy.get('[data-testid="node-C"]').should("not.exist");
+    cy.get('[data-testid="node-A"]').should("exist");
+    cy.get('[data-testid="node-B"]').should("exist");
+
+    // El estado lógico no cambia: el store sigue conteniendo los 3 objetos.
+    cy.window()
+      .its("__store")
+      .invoke("getState")
+      .its("graph.objects")
+      .should("have.length", 3);
+
     cy.window().then((win) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (win as any).__store.getState().updateSimulationState({ showCollectedView: false });
@@ -459,6 +481,11 @@ describe("GC Visualizer — End-to-End", () => {
       .invoke("getState")
       .its("simulationState.showCollectedView")
       .should("eq", false);
+
+    // Al volver a vista completa, C reaparece en el canvas.
+    cy.get('[data-testid="node-C"]').should("exist");
+    cy.get('[data-testid="node-A"]').should("exist");
+    cy.get('[data-testid="node-B"]').should("exist");
   });
 
   it("TC-E-12: reiniciar tras simulación y volver a ejecutar", () => {
