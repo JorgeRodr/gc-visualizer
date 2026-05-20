@@ -11,6 +11,8 @@
 | 1.3 | 05/05/2026 | Segunda versión. Derivada de SRS v1.4. Eliminadas referencias académicas. TC-E-02 ampliado (toast texto exacto, RF-26). TC-E-04 ampliado (dos métodos, RF-04). TC-E-05 ampliado (clic arista, Delete). TC-E-08 ampliado (slider velocidad). Añadidos TC-E-18, TC-E-19 (RF-04), TC-E-20 (RF-05), TC-E-21 (RF-10). RF-26 añadido a matriz. Total: 45 casos de prueba. | — |
 | 1.4 | 10/05/2026 | Derivada de SRS v1.5 y UI_SPEC v2.2. Añadidos TC-U-15..21 (findFreePosition), TC-U-22..24 (factory MemoryReference con handles), TC-I-11..12 (createReference con handles), TC-I-13..16 (export/import con handles), TC-I-17..18 (runSimulation con grafo vacío), TC-E-22..27 (E2E pendientes de implementar — ver TEST_IMPLEMENTATION_PLAN.md). Total: 67 casos de prueba (61 implementados + 6 pendientes). | — |
 | 1.5 | 12/05/2026 | Cierre del TEST_IMPLEMENTATION_PLAN.md. Implementados TC-E-22..27 (los 6 E2E pendientes). TC-E-24 y TC-E-27 incluyen nota de implementación que documenta la degradación por la limitación de pointer events sintéticos de Cypress contra el motor de drag de React Flow v12. Total: 67 casos de prueba (todos implementados). | — |
+| 1.6 | 20/05/2026 | Añadidas secciones 2.1 y 3.1 "Pruebas complementarias derivadas de TDD" que documentan tests TDD sin TC formal: variants/ramas de TC-U-01 y TC-U-13 a nivel unitario; ramas y guards adicionales de TC-I-01..10, casos de uso auxiliares (`clearScenario`, `deleteObject`, `deleteReference`, `editObject`, `markAsRoot`, `loadPredefinedScenario`) y acciones aisladas del store a nivel de integración. Corregido el etiquetado de los tests TC-I-17 y TC-I-18 en el código fuente (faltaba el prefijo). Total: 67 casos de prueba (sin cambios en el conteo formal). | — |
+| 1.7 | 20/05/2026 | Añadida sección 4.1 "Pruebas complementarias derivadas de TDD" (análoga a 2.1 y 3.1) que documenta los 5 tests E2E de verificación de *outcome* de escenarios predefinidos residentes en `cypress/e2e/predefined-scenarios.cy.ts` (sin TC formal). Corregido el conteo de TCs formales en la sección 5: de "67" a "69" — la matriz contiene 24 TC-U + 18 TC-I + 27 TC-E = 69 desde v1.4; el valor "67" arrastraba un error aritmético en el incremento v1.3→v1.4 (se contabilizaron +22 cuando los TCs añadidos sumaban +24). Total: 69 casos de prueba formales. | — |
 
 
 ## 1. Introducción
@@ -398,6 +400,20 @@ Las pruebas unitarias verifican el comportamiento del dominio de forma aislada. 
 | Resultado esperado | ref.sourceHandle="left" y ref.targetHandle es undefined. |
 
 
+### 2.1 Pruebas complementarias derivadas de TDD
+
+Análogamente a la sección 3.1, el árbol de tests unitarios incluye tests complementarios escritos siguiendo el ciclo TDD que cubren ramas no especificadas por los TC-U documentados. No se han elevado a Caso de Prueba formal, pero son ejecutados por Jest y contribuyen a la cobertura de ramas.
+
+| Test | Rama o invariante cubierta | Módulo bajo prueba | TC-U de referencia |
+| --- | --- | --- | --- |
+| `memoryObject.test.ts` — "object created with isRoot=true via options" | Rama positiva del parámetro opcional `options.isRoot` | `domain/models/MemoryObject` | TC-U-01 (cubre la rama por defecto) |
+| `graphValidator.test.ts` — "rejects duplicate object identifiers" | Rama: ids duplicados en la lista de objetos | `domain/validators/graphValidator` | TC-U-13 |
+| `graphValidator.test.ts` — "rejects duplicate references between the same pair of objects" | Rama: el validador señala referencias duplicadas | `domain/validators/graphValidator` | TC-U-13 |
+| `graphValidator.test.ts` — "accepts a valid graph" | Happy path del validador (`isValid=true`) | `domain/validators/graphValidator` | TC-U-13 |
+
+Nota: la rama "rejects duplicate references" del validador no debe confundirse con TC-U-03, que verifica la idempotencia de `addReference` sobre el modelo `MemoryGraph`. Son ramas distintas en módulos distintos: TC-U-03 prueba que `addReference` no inserta un duplicado; este test prueba que `graphValidator` lo señalaría si ya estuviera presente en el grafo.
+
+
 ## 3. Pruebas de integración
 
 Las pruebas de integración verifican la interacción entre capas: casos de uso de aplicación invocando el dominio, actualización del store y serialización de escenarios. Se ejecutan con Jest.
@@ -635,6 +651,62 @@ Las pruebas de integración verifican la interacción entre capas: casos de uso 
 | Precondición | Store inicializado con grafo vacío. |
 | Pasos | 1. Invocar runSimulation({ skipRootCheck: true }). |
 | Resultado esperado | result.ran=false, result.reason="empty-graph". El guard de grafo vacío precede al chequeo de raíces. |
+
+
+### 3.1 Pruebas complementarias derivadas de TDD
+
+Además de los casos TC-I-01 a TC-I-18 listados arriba, el árbol de tests de integración incluye varias baterías complementarias escritas siguiendo el ciclo TDD (test rojo → implementación → verde). Aunque no se han elevado a Caso de Prueba formal del STS, son ejecutadas por Jest, contribuyen a la cobertura informada por `npm run test:coverage` y forman parte del cinturón de regresión. Se agrupan en tres familias:
+
+**Casos de uso auxiliares de edición y gestión de escenario**
+
+Casos de uso cuya verificación a nivel de UI ya está cubierta por los TC-E correspondientes (TC-E-02 para RF-02, TC-E-03 para RF-03, TC-E-05 para RF-05, TC-E-06 para RF-06, TC-E-13 para RF-18); el test de integración aísla la lógica del caso de uso por encima del estricto mínimo documental.
+
+| Caso de uso | Ramas cubiertas | RF asociado |
+| --- | --- | --- |
+| `clearScenario` | vaciado del grafo + reinicio del estado de simulación | RF-02 (apoyo), RF-05 (apoyo) |
+| `deleteObject` | éxito (con recuento de referencias eliminadas) + objeto inexistente + bloqueo durante simulación | RF-02 |
+| `deleteReference` | éxito + referencia inexistente + bloqueo durante simulación | RF-05 |
+| `editObject` | edición de etiqueta y posición + objeto inexistente + bloqueo durante simulación | RF-03 |
+| `markAsRoot` | toggle false→true + toggle true→false + objeto inexistente + bloqueo durante simulación | RF-06 |
+| `loadPredefinedScenario` | reemplazo de grafo + reinicio del estado de simulación | RF-18 (apoyo) |
+
+Fichero: `src/tests/integration/useCases.misc.test.ts`.
+
+**Ramas y guards adicionales de casos de uso ya documentados**
+
+Tests que cubren ramas concretas (errores, edge cases, invariantes) de casos de uso que sí tienen TC-I formal, pero cuya especificación se centra en el camino feliz.
+
+| Test | Rama o invariante cubierta | TC-I de referencia |
+| --- | --- | --- |
+| `createObject.test.ts` — "auto-generates a label when none is provided" | Label omitido → genera etiqueta "Objeto N" | TC-I-01 |
+| `createObject.test.ts` — "assigns unique ids to each new object" | Invariante: cada invocación produce id único | TC-I-01 |
+| `createReference.test.ts` — "rejects when source or target does not exist" | Endpoint inexistente → `missing-endpoint` | TC-I-02 |
+| `runSimulation.test.ts` — "rejects when no roots are defined (without skipRootCheck)" | Sin raíces ni `skipRootCheck` → `no-roots` | TC-I-05 |
+| `runSimulation.test.ts` — "runs with skipRootCheck=true and collects all objects when no roots" | Rama positiva de `skipRootCheck=true` con objetos | TC-I-18 |
+| `stepSimulation.test.ts` — "forward computes steps lazily when none precomputed" | Avanzar sin steps precalculados (recálculo perezoso) | TC-I-04 |
+| `stepSimulation.test.ts` — "forward does not advance past last step" | Invariante de cota superior | TC-I-04 |
+| `stepSimulation.test.ts` — "backward does not regress before step 0" | Invariante de cota inferior | TC-I-04 |
+| `scenarioSerialization.test.ts` — "importScenario rejects malformed JSON" | Error de parseo del JSON de entrada | TC-I-10 |
+| `scenarioSerialization.test.ts` — "importScenario rejects JSON with duplicate object identifiers" | Rama de validación: ids duplicados en el JSON | TC-I-10 |
+| `scenarioSerialization.test.ts` — "export then import round-trips fidelity" | Invariante de fidelidad del round-trip (sin handles) | TC-I-09 |
+
+**Acciones del store y helpers del modelo**
+
+Los TC-I-01 a TC-I-18 verifican el store de Zustand de forma indirecta a través de los casos de uso. Estos tests aíslan cada acción del store y los helpers del modelo `MemoryGraph` para garantizar su contrato.
+
+| Test | Elemento bajo prueba | Categoría |
+| --- | --- | --- |
+| "setGraph replaces the current graph" | Acción `setGraph` | Store |
+| "updateSimulationState merges a partial patch" | Acción `updateSimulationState` (merge parcial) | Store |
+| "setSelectedElement updates simulationState.selectedElementId" | Acción `setSelectedElement` | Store |
+| "reset returns the store to its initial state" | Acción `reset` (graph + simulationState + connectionMode + editingNode) | Store |
+| "connection mode lifecycle: start, select source, cancel" | `startConnectionMode` / `selectConnectionSource` / `cancelConnectionMode` | Store |
+| "setEditingNode toggles inline-editing state" | Acción `setEditingNode` | Store |
+| "getOutgoingReferences and getIncomingReferences return only matching references" | Helpers `getOutgoingReferences` / `getIncomingReferences` | Modelo `MemoryGraph` |
+
+Fichero: `src/tests/integration/simulationStore.test.ts`.
+
+La existencia de estas tres baterías por encima del estricto mínimo documental obedece a la disciplina TDD adoptada durante la implementación: cada caso de uso, rama o acción del store requirió un test que especificara su contrato antes de escribir el código.
 
 
 ## 4. Pruebas end-to-end
@@ -995,9 +1067,36 @@ Las pruebas end-to-end verifican la aplicación completa desde el navegador, sim
 | Nota de implementación | Degradado a verificación del contrato de la pasarela `onConnect` desde Cypress: el test invoca `__useCases.createReference("A","B",{ source:"right", target:"left" })` (que es exactamente la llamada que `onConnect` realiza tras un drag con destino válido) y comprueba que la referencia resultante en el store preserva ambos handles. Razón: el motor de drag de React Flow v12 (`setPointerCapture` + `elementsFromPoint`) no es reproducible de forma fiable con los pointer events sintéticos de Cypress. |
 
 
+### 4.1 Pruebas complementarias derivadas de TDD
+
+Análogamente a las secciones 2.1 y 3.1, el árbol de tests end-to-end incluye una batería complementaria de verificación de *outcome* de los 5 escenarios predefinidos. TC-E-13 valida la *carga* de un escenario predefinido (estado limpio tras seleccionarlo en el desplegable); estos 5 tests adicionales validan, para cada escenario, que la simulación Mark & Sweep produce el resultado esperado descrito en UI_SPEC §11. No se han elevado a TC-E formales porque el comportamiento del algoritmo está ya cubierto exhaustivamente por los TC-U-06..14 (estructura del algoritmo) y TC-I-05 (grafo mixto a nivel de integración); estos tests cierran el lazo verificando el outcome a través de la UI real del escenario predefinido cargado.
+
+| Test | Escenario predefinido | Outcome verificado |
+| --- | --- | --- |
+| `predefined-scenarios.cy.ts` — "Cadena lineal" | `cadena-lineal` | A, B, C marcados (todos alcanzables desde la raíz) |
+| `predefined-scenarios.cy.ts` — "Ciclo alcanzable" | `ciclo-alcanzable` | A, B, C marcados pese al ciclo B↔C |
+| `predefined-scenarios.cy.ts` — "Ciclo inalcanzable" | `ciclo-inalcanzable` | Solo la raíz queda marcada; el ciclo B↔C es recolectado |
+| `predefined-scenarios.cy.ts` — "Múltiples raíces" | `multiples-raices` | A, B, C, D marcados; E aislado recolectado |
+| `predefined-scenarios.cy.ts` — "Sin raíces" | `sin-raices` | Diálogo de confirmación; tras continuar, todos los objetos quedan recolectados |
+
+Fichero: `cypress/e2e/predefined-scenarios.cy.ts`. El comentario inicial del fichero los identifica como *"Fase 9.4 — verificación de los 5 escenarios predefinidos"*.
+
+
 ## 5. Resumen de casos de prueba
 
-Relación completa de los 67 casos de prueba especificados en este documento (todos implementados; las notas de implementación de TC-E-24 y TC-E-27 documentan la degradación frente a la limitación conocida de Cypress + React Flow):
+Relación completa de los 69 casos de prueba formales especificados en este documento (todos implementados; las notas de implementación de TC-E-24 y TC-E-27 documentan la degradación frente a la limitación conocida de Cypress + React Flow). No se incluyen en la matriz los tests complementarios derivados de TDD documentados en las secciones 2.1, 3.1 y 4.1, que aportan cobertura adicional sin TC formal.
+
+**Nota sobre el conteo de tests ejecutados vs. TCs formales**
+
+Los 69 TCs de la matriz son la cifra formal del documento. La ejecución real del cinturón de tests reporta cifras distintas porque incluye también los tests complementarios derivados de TDD:
+
+| Comando | Tests reportados | Desglose |
+| --- | ---: | --- |
+| `npm test` (Jest: unit + integración) | **79** | 42 TCs formales (24 TC-U + 18 TC-I) + 37 complementarios (4 de §2.1 + 33 de §3.1) |
+| `npm run cypress` (E2E) | **32** | 27 TCs formales (TC-E-01..27) + 5 complementarios (§4.1) |
+| Total absoluto del proyecto | **111** | 69 TCs formales + 42 complementarios |
+
+La cifra "69" se refiere exclusivamente a la matriz de trazabilidad con el SRS; las cifras "79" y "32" reflejan lo que ejecutan Jest y Cypress, respectivamente, incluyendo el cinturón TDD documentado en las secciones 2.1, 3.1 y 4.1.
 
 | ID | Nivel | Nombre | RF cubiertos |
 | --- | --- | --- | --- |
