@@ -44,11 +44,10 @@ for (const { name, cmd, cwd } of steps) {
   }
 }
 
-console.log("\nReportes generados en audit/reports/.");
-console.log("- audit/reports/coverage/index.html");
-console.log("- audit/reports/stryker/index.html");
 if (hadFailure) {
+  console.log("\nAuditoría finalizada con findings. Revisa los reportes.");
+} else {
   console.log(
-    "\nAl menos una herramienta detectó findings o falló (exit != 0). Revisa los reportes.",
+    "\nAuditoría finalizada sin findings. Reportes generados en audit/reports/.",
   );
 }
