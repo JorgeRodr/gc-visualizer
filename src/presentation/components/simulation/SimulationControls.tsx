@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSimulationStore } from "../../../application/simulationStore";
 import { resetSimulation } from "../../../application/useCases/resetSimulation";
+import { runSimulation } from "../../../application/useCases/runSimulation";
 import { stepSimulation } from "../../../application/useCases/stepSimulation";
 import { TOAST_TEXT } from "../../notifications/notifications";
 
@@ -23,6 +24,9 @@ export function SimulationControls() {
     (s) => s.updateSimulationState,
   );
   const hasObjects = useSimulationStore((s) => s.graph.objects.length > 0);
+  const hasRoots = useSimulationStore((s) =>
+    s.graph.objects.some((o) => o.isRoot),
+  );
 
   const [speed, setSpeed] = useState(DEFAULT_SPEED);
   const [running, setRunning] = useState(false);
@@ -109,6 +113,10 @@ export function SimulationControls() {
   const canStepBackward = !running && hasSteps && !atFirstStep;
   const canStepForward = !running && !atLastStep && hasObjects;
   const canReset = hasObjects;
+  // Botón "Ejecución instantánea" (CU-07): variante "una sola acción" de RF-14.
+  // Se mantiene sencillo a propósito — sin diálogo de no-raíces (eso lo cubre
+  // el botón "Ejecutar"); aquí simplemente queda deshabilitado si faltan raíces.
+  const canRunInstant = !running && hasObjects && hasRoots;
 
   const handlePlay = useCallback(() => {
     if (running) return;
@@ -150,6 +158,13 @@ export function SimulationControls() {
     stopAuto();
     resetSimulation();
   };
+
+  const handleRunInstant = useCallback(() => {
+    if (isDone) {
+      resetSimulation();
+    }
+    runSimulation();
+  }, [isDone]);
 
   const handleToggleCollectedView = () =>
     updateSimulationState({ showCollectedView: !showCollectedView });
@@ -200,6 +215,15 @@ export function SimulationControls() {
         className={secondaryBtn}
       >
         ↻ Reiniciar
+      </button>
+      <button
+        data-testid="btn-ejecucion-instantanea"
+        onClick={handleRunInstant}
+        disabled={!canRunInstant}
+        className={secondaryBtn}
+        title="Ejecutar y mostrar el resultado final sin animación"
+      >
+        ⏭ Resultado
       </button>
 
       <div className="flex items-center gap-2 ml-4">
