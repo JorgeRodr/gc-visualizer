@@ -240,6 +240,15 @@ Definir todos los colores como constantes en `src/presentation/styles/stateColor
 5. "Pausar" → detiene el intervalo conservando el paso actual
 6. Cambio de velocidad durante ejecución → cancelar intervalo actual y crear nuevo con nuevo delay
 
+### 7.8a Ejecución instantánea
+Variante "una sola acción" de RF-14 / CU-07. Pensada para usuarios que ya conocen el algoritmo o que quieren inspeccionar el resultado final sin esperar la animación.
+
+1. Usuario pulsa "⏭ Resultado" (`btn-ejecucion-instantanea`)
+2. El sistema invoca el caso de uso `runSimulation`, que precalcula todos los pasos y deja la simulación en `phase = done` con `currentStep` apuntando al último paso.
+3. La interfaz muestra directamente el resultado final: objetos alcanzables marcados, objetos no alcanzables como recolectados, log completo y explicación textual.
+4. Los pasos quedan disponibles en el store, por lo que tras pulsarlo el usuario puede usar "Paso anterior" para inspeccionar la traza del algoritmo a posteriori.
+5. Deshabilitado si el grafo no contiene objetos o si no hay ninguna raíz definida (ver tabla §8). El flujo de confirmación "sin raíces" sigue siendo responsabilidad exclusiva del botón "Ejecutar"; aquí se opta por la vía más sencilla.
+
 ### 7.9 Control de velocidad
 - Slider rango 1-10 (enteros), valor por defecto 5
 - Muestra valor actual como texto: "5x"
@@ -271,6 +280,7 @@ Definir todos los colores como constantes en `src/presentation/styles/stateColor
 | Paso anterior | según step | ✗ | según step | según step | ✗ |
 | Paso siguiente | ✓ | ✗ | ✓ | ✗ | ✗ (sobreescribe) |
 | Reiniciar | ✓ | ✓ | ✓ | ✓ | ✗ (sobreescribe) |
+| Ejecución instantánea | ✓ (con raíces) | ✗ | ✗ | ✓ (con raíces) | ✗ (sobreescribe) |
 | Ver grafo tras recolección | ✗ | ✗ | ✗ | ✓ | ✗ |
 
 La columna "grafo vacío" (`graph.objects.length === 0`) tiene prioridad sobre las demás: cuando el grafo no contiene objetos, Ejecutar / Paso siguiente / Reiniciar quedan deshabilitados aunque la fase en otra columna los habilitase. El slider de velocidad y Pausar mantienen su lógica habitual.
