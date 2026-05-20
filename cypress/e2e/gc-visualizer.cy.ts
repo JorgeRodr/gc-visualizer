@@ -235,14 +235,30 @@ describe("GC Visualizer — End-to-End", () => {
   it("TC-E-06: marcar y desmarcar objeto raíz con diferenciación visual", () => {
     seedScenario([{ id: "A", label: "A" }, { id: "B", label: "B" }]);
 
+    // Estado inicial en el canvas: ningún nodo es raíz, ambos con estilo "normal".
+    cy.get('[data-testid="node-A"]').should("have.class", "bg-white");
+    cy.get('[data-testid="node-A"]').should("not.have.class", "bg-slate-800");
+    cy.get('[data-testid="node-B"]').should("have.class", "bg-white");
+
     cy.get('[data-testid="object-list-item-A"]').click();
     cy.get('[data-testid="btn-marcar-raiz"]').click();
     cy.get('[data-testid="object-list-item-A"]').should("contain", "Raíz");
     cy.get('[data-testid="object-list-item-B"]').should("not.contain", "Raíz");
 
+    // Tras marcar A como raíz: el nodo del canvas pasa al estilo "root"
+    // (fondo oscuro + texto blanco). B sigue siendo un nodo normal.
+    cy.get('[data-testid="node-A"]').should("have.class", "bg-slate-800");
+    cy.get('[data-testid="node-A"]').should("have.class", "text-white");
+    cy.get('[data-testid="node-B"]').should("have.class", "bg-white");
+    cy.get('[data-testid="node-B"]').should("not.have.class", "bg-slate-800");
+
     cy.get('[data-testid="object-list-item-A"]').click();
     cy.get('[data-testid="btn-marcar-raiz"]').click();
     cy.get('[data-testid="object-list-item-A"]').should("not.contain", "Raíz");
+
+    // Tras desmarcar A: vuelve al estilo "normal" del canvas.
+    cy.get('[data-testid="node-A"]').should("have.class", "bg-white");
+    cy.get('[data-testid="node-A"]').should("not.have.class", "bg-slate-800");
   });
 
   // --------------------------------------------------------------------------
