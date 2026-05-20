@@ -47,9 +47,10 @@ for (const { name, cmd, cwd } of steps) {
   }
 }
 
-console.log("\nReportes generados en audit/reports/.");
 if (hadFailure) {
+  console.log("\nAuditoría finalizada con findings. Revisa los reportes.");
+} else {
   console.log(
-    "Al menos una herramienta detectó findings (exit != 0). Revisa los reportes.",
+    "\nAuditoría finalizada sin findings. Reportes generados en audit/reports/.",
   );
 }
