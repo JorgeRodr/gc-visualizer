@@ -1,0 +1,14 @@
+{
+  "threshold": 5,
+  "minLines": 8,
+  "minTokens": 50,
+  "ignore": [
+    "**/*.test.{ts,tsx}",
+    "**/*.spec.{ts,tsx}",
+    "**/node_modules/**",
+    "**/dist/**",
+    "audit/**"
+  ],
+  "reporters": ["console", "json"],
+  "output": "audit/reports/jscpd"
+}
