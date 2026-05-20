@@ -37,3 +37,7 @@ cypress/downloads
 
 #Obsidian
 docs/.obsidian/
+
+# Documentación local del TFM (decisión: nunca versionar en remoto).
+# Los ficheros viven en el working tree pero no se suben al repo.
+docs/
