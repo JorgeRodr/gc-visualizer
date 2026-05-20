@@ -17,14 +17,31 @@ interface SimRef {
   target: string;
 }
 
-const buildObject = (o: SimObject) => ({
+// Auto-layout para escenarios sembrados sin posiciones explícitas: grid de
+// 4 columnas con spacing 200px horizontal × 150px vertical desde (100, 100).
+// El canvas usa `fitView`, así que las posiciones generadas se reencuadran
+// automáticamente; el objetivo aquí es evitar el solape visual de nodos.
+const AUTO_LAYOUT_COLS = 4;
+const AUTO_LAYOUT_COL_WIDTH = 200;
+const AUTO_LAYOUT_ROW_HEIGHT = 150;
+const AUTO_LAYOUT_X_START = 100;
+const AUTO_LAYOUT_Y_START = 100;
+
+const autoPosition = (index: number) => ({
+  x: AUTO_LAYOUT_X_START + (index % AUTO_LAYOUT_COLS) * AUTO_LAYOUT_COL_WIDTH,
+  y:
+    AUTO_LAYOUT_Y_START +
+    Math.floor(index / AUTO_LAYOUT_COLS) * AUTO_LAYOUT_ROW_HEIGHT,
+});
+
+const buildObject = (o: SimObject, index: number) => ({
   id: o.id,
   label: o.label,
   isRoot: o.isRoot ?? false,
   marked: false,
   alive: true,
   visitedOrder: null,
-  position: o.position ?? { x: 100, y: 100 },
+  position: o.position ?? autoPosition(index),
 });
 
 const buildReference = (r: SimRef) => ({
