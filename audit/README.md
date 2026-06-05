@@ -84,9 +84,9 @@ audit/
 - **Aislamiento total del proyecto principal**: las únicas modificaciones que necesita el código del producto son **cero**. Toda la auditoría se ejecuta desde `audit/` y produce sus reportes aquí.
 - **Reúso de Jest y ESLint del proyecto principal**: para no duplicar 200 MB de `node_modules`, los scripts de auditoría que necesitan Jest o ESLint los invocan desde la raíz usando configuraciones de `audit/` para las reglas específicas.
 - **Configuración paralela de ESLint**: `audit/eslint.audit.config.js` extiende la configuración del proyecto principal añadiendo las reglas de auditoría (complexity, max-lines, anti-patrones Jest). El `eslint.config.js` del raíz queda intacto.
-- **Sin CI ni hooks**: el workflow se ejecuta manualmente. Su propósito es ofrecer **reproducibilidad por terceros** (p. ej. evaluadores del TFM), no automatización continua.
+- **Sin CI ni hooks**: el workflow se ejecuta manualmente. Su propósito es ofrecer **reproducibilidad por terceros**, no automatización continua.
 
-## Para evaluadores del TFM
+## Reproducibilidad
 
 Para reproducir las métricas:
 
@@ -99,4 +99,4 @@ npm install            # deps de auditoría
 npm run audit:all-phases
 ```
 
-Tras ~6-8 minutos tendrás los reportes en `audit/reports/`. Las cifras de coverage, mutation score, hotspots, complejidad, dependencias circulares, etc. deben coincidir con las citadas en la memoria del TFM (salvo el dato de churn de git, que crecerá con cada commit nuevo posterior a la fecha de evaluación).
+Tras ~6-8 minutos tendrás los reportes en `audit/reports/`. Las cifras de coverage, mutation score, hotspots, complejidad, dependencias circulares, etc. son deterministas y deben coincidir entre ejecuciones (salvo el dato de churn de git, que crecerá con cada commit nuevo).
