@@ -1,0 +1,12 @@
+node_modules
+dist
+audit
+coverage
+cypress/screenshots
+cypress/videos
+cypress/downloads
+docs
+.git
+.claude
+*.log
+*.tsbuildinfo
