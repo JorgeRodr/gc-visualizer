@@ -68,10 +68,6 @@ export function GraphCanvas() {
 
   const currentObjectId = steps[currentStep]?.currentObjectId ?? null;
 
-  // Local node state — React Flow needs to mutate positions during drag.
-  // We rebuild this state when the set of object ids changes; otherwise we
-  // patch existing nodes' data so flags (marked, alive, etc.) update without
-  // disrupting an in-progress drag.
   const [localNodes, setLocalNodes] = useState<ObjectNodeType[]>([]);
 
   const objectIdsKey = snapshot.objects.map((o) => o.id).join(",");
@@ -93,7 +89,6 @@ export function GraphCanvas() {
         },
       })),
     );
-    // Intentionally only on structural changes (ids set).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [objectIdsKey]);
 
@@ -136,9 +131,6 @@ export function GraphCanvas() {
     [snapshot.references, selectedElementId],
   );
 
-  // RF-16: when "view after collection" is on, hide collected nodes and any
-  // edges incident to them. localNodes still holds every node so positions
-  // persist when the user toggles the view back off.
   const visibleNodes = useMemo(
     () =>
       showCollectedView ? localNodes.filter((n) => n.data.alive) : localNodes,
@@ -168,8 +160,6 @@ export function GraphCanvas() {
   const onConnect: OnConnect = useCallback(
     ({ source, target, sourceHandle, targetHandle }) => {
       if (!source || !target) return;
-      // Drag mode: ReactFlow resolves the closest handle; persist the user's
-      // choice so the edge stays anchored to the same side on re-render.
       const result = createReference(source, target, {
         source: sourceHandle,
         target: targetHandle,
@@ -192,8 +182,6 @@ export function GraphCanvas() {
           selectConnectionSource(node.id);
           return;
         }
-        // Button mode (sequential click): right side acts as source, left as
-        // target by spec. Drag mode is the place where the user chooses sides.
         const result = createReference(connectionMode.sourceId, node.id, {
           source: "right",
           target: "left",
@@ -250,7 +238,6 @@ export function GraphCanvas() {
     [phase, setEditingNode],
   );
 
-  // Keyboard: Escape cancels connection mode and inline editing.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
@@ -262,9 +249,6 @@ export function GraphCanvas() {
     return () => window.removeEventListener("keydown", handler);
   }, [connectionMode.active, cancelConnectionMode]);
 
-  // Keyboard: Delete/Backspace removes the current selection.
-  // Wired here so the same shortcut works regardless of whether the
-  // canvas or the left panel has focus.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;

@@ -163,7 +163,6 @@ describe("computeMarkAndSweepSteps", () => {
     expect(getObject(finalGraph, "A")?.marked).toBe(true);
     expect(getObject(finalGraph, "B")?.marked).toBe(true);
     expect(getObject(finalGraph, "C")?.marked).toBe(true);
-    // Each object visited exactly once
     const bVisits = steps.filter((s) => s.currentObjectId === "B").length;
     expect(bVisits).toBeLessThanOrEqual(1);
   });
@@ -196,7 +195,6 @@ describe("computeMarkAndSweepSteps", () => {
 
     expect(getObject(finalGraph, "A")?.alive).toBe(true);
     expect(getObject(finalGraph, "B")?.alive).toBe(false);
-    // B remains in the graph in the collected state
     expect(getObject(finalGraph, "B")).toBeDefined();
   });
 

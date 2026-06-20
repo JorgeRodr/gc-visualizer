@@ -1,12 +1,6 @@
 import toast from "react-hot-toast";
 
-/**
- * Exact toast messages required by UI_SPEC §9 / RF-26.
- *
- * Cypress E2E tests assert these strings verbatim — do not paraphrase.
- */
 export const TOAST_TEXT = {
-  // Errors (red)
   duplicateReference: "Esta referencia ya existe entre estos dos objetos",
   createReferenceDuringSimulation:
     "No es posible crear referencias durante la simulación",
@@ -19,12 +13,10 @@ export const TOAST_TEXT = {
   invalidJsonFormat: "El archivo no tiene el formato correcto",
   jsonInconsistencies:
     "El archivo contiene referencias a objetos inexistentes",
-  // Info (blue)
   objectDeletedWithRefs: (n: number) =>
     `Objeto eliminado. También se eliminaron ${n} referencias asociadas.`,
   scenarioImported: "Escenario importado correctamente",
   scenarioExported: "Escenario exportado correctamente",
-  // Confirmation dialog (not a toast)
   noRootsDialog:
     "No hay raíces definidas. Todos los objetos serán considerados inalcanzables. ¿Continuar?",
 } as const;

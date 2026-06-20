@@ -33,7 +33,6 @@ describe("resetSimulation use case", () => {
     for (const ref of graph.references) {
       expect(ref.traversed).toBe(false);
     }
-    // Scenario preserved
     expect(graph.objects.length).toBe(2);
     expect(graph.references.length).toBe(1);
   });
@@ -53,7 +52,6 @@ describe("resetSimulation use case", () => {
     expect(simulationState.phase).toBe("idle");
     expect(simulationState.steps).toEqual([]);
     expect(simulationState.logs).toEqual([]);
-    // Roots and objects preserved
     expect(graph.objects.find((o) => o.id === a.id)?.isRoot).toBe(true);
     expect(graph.objects.length).toBe(3);
     expect(graph.references.length).toBe(1);

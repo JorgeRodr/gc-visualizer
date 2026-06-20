@@ -36,8 +36,6 @@ describe("findFreePosition", () => {
   });
 
   test("TC-U-17: respects non-zero bounds origin (zoomed/panned viewport)", () => {
-    // Simulate a viewport that, in flow coordinates, sits at (200..600, 150..450).
-    // This mirrors the situation after fitView zooms in on a single node.
     const zoomed: FlowBounds = { minX: 200, minY: 150, maxX: 600, maxY: 450 };
     const p = findFreePosition([], zoomed, seqRandom([0, 0]));
     expect(p).toEqual({ x: zoomed.minX + MARGIN, y: zoomed.minY + MARGIN });
@@ -49,10 +47,8 @@ describe("findFreePosition", () => {
     const usableW = bounds.maxX - bounds.minX - NODE_W - 2 * MARGIN;
     const usableH = bounds.maxY - bounds.minY - NODE_H - 2 * MARGIN;
     const random = seqRandom([
-      // First attempt lands on top of (100, 100) → must be rejected.
       (100 - bounds.minX - MARGIN) / usableW,
       (100 - bounds.minY - MARGIN) / usableH,
-      // Second attempt: max corner — far from (100, 100).
       1,
       1,
     ]);
@@ -73,8 +69,6 @@ describe("findFreePosition", () => {
 
     const usableW = bounds.maxX - bounds.minX - NODE_W - 2 * MARGIN;
     const usableH = bounds.maxY - bounds.minY - NODE_H - 2 * MARGIN;
-    // Force every random sample to collide with the first occupied node so the
-    // randomized loop exhausts and the fallback tile-scan must take over.
     const random = seqRandom([
       (50 - bounds.minX - MARGIN) / usableW,
       (50 - bounds.minY - MARGIN) / usableH,

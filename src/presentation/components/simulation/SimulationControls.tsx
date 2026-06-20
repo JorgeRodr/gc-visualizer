@@ -64,7 +64,6 @@ export function SimulationControls() {
     setRunning(true);
   }, [speed]);
 
-  // Restart interval when speed changes during running
   useEffect(() => {
     if (running && intervalRef.current !== null) {
       window.clearInterval(intervalRef.current);
@@ -86,7 +85,6 @@ export function SimulationControls() {
     }
   }, [speed, running]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (intervalRef.current !== null) {
@@ -100,28 +98,16 @@ export function SimulationControls() {
   const hasSteps = steps.length > 0;
   const atLastStep = hasSteps && currentStep >= steps.length - 1;
   const atFirstStep = !hasSteps || currentStep <= 0;
-
-  // canPlay alignment with UI_SPEC §8 / Plan §6.2:
-  //   idle ✓, running ✗, paused ✓ (acts as "Reanudar" per RF-11 and TC-E-08
-  //   step 5 — the spec table itself does not list a separate Reanudar button),
-  //   done ✓ (handlePlay resets first and starts over).
-  // Empty graph: nothing to simulate or reset, so the entry-point buttons
-  // (Ejecutar, Paso siguiente, Reiniciar) stay disabled. Pause and the speed
-  // slider keep their existing logic — they're only reachable while running.
   const canPlay = !running && hasObjects;
   const canPause = running;
   const canStepBackward = !running && hasSteps && !atFirstStep;
   const canStepForward = !running && !atLastStep && hasObjects;
   const canReset = hasObjects;
-  // Botón "Ejecución instantánea" (CU-07): variante "una sola acción" de RF-14.
-  // Se mantiene sencillo a propósito — sin diálogo de no-raíces (eso lo cubre
-  // el botón "Ejecutar"); aquí simplemente queda deshabilitado si faltan raíces.
   const canRunInstant = !running && hasObjects && hasRoots;
 
   const handlePlay = useCallback(() => {
     if (running) return;
 
-    // If finished, reset and start over.
     if (isDone) {
       resetSimulation();
     }
@@ -139,9 +125,6 @@ export function SimulationControls() {
 
   const handleConfirmNoRoots = () => {
     setConfirmingNoRoots(false);
-    // stepSimulation lazily computes the steps when none exist and lands on
-    // step 0; computeMarkAndSweepSteps already emits an explanatory step
-    // when no roots are defined.
     stepSimulation("forward");
     startAuto();
   };

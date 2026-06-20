@@ -60,7 +60,6 @@ describe("runSimulation use case", () => {
   });
 
   test("TC-I-07: graphValidator detects structural inconsistencies and blocks simulation", () => {
-    // Manually craft an invalid store state: a reference pointing to a non-existent object
     const a = createObject({ label: "A", isRoot: true });
     useSimulationStore.setState((s) => ({
       graph: {
@@ -82,7 +81,6 @@ describe("runSimulation use case", () => {
     expect(result.errors).toBeDefined();
     expect(result.errors!.length).toBeGreaterThan(0);
 
-    // Simulation must not have produced steps
     expect(useSimulationStore.getState().simulationState.steps).toEqual([]);
   });
 
@@ -96,14 +94,12 @@ describe("runSimulation use case", () => {
   });
 
   test("TC-I-17: runSimulation rejects an empty graph as a second line of defense", () => {
-    // Empty graph: no objects, no references.
     const before = useSimulationStore.getState().simulationState;
 
     const result = runSimulation();
     expect(result.ran).toBe(false);
     expect(result.reason).toBe("empty-graph");
 
-    // Store must not be modified.
     expect(useSimulationStore.getState().simulationState).toEqual(before);
   });
 

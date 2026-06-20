@@ -1,5 +1,8 @@
 /// <reference types="cypress" />
 
+// se dejan todos los tests en un mismo fichero para que el agente de implementación trabaje con un único contexto
+// también se mantienen los comentarios escritos durante la implementación para no eliminar información crucial para el agente de mantenimiento
+
 // ----------------------------------------------------------------------------
 // Helpers
 // ----------------------------------------------------------------------------
