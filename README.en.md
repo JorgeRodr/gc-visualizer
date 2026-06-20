@@ -94,6 +94,14 @@ To stop and clean up the containers:
 docker compose down
 ```
 
+The `--build` flag is only needed the first time or whenever something inside the image changes (`src/` code, dependencies, `Dockerfile` or `nginx.conf`):
+
+| Situation                       | Command                       |
+| ------------------------------- | ----------------------------- |
+| First run or after code changes | `docker compose up --build`   |
+| Restart with no changes         | `docker compose up -d`        |
+| Stop and clean up               | `docker compose down`         |
+
 > This is a static production build served by nginx, so there is **no hot reload**. If you change the code, run `docker compose up --build` again. If port `8080` is taken, change the mapping in `docker-compose.yml` (e.g. `"3000:80"`).
 
 ## Available scripts
