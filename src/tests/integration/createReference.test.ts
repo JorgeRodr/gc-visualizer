@@ -26,7 +26,6 @@ describe("createReference use case", () => {
     expect(refsAB.length).toBe(1);
   });
 
-  // VER SI ESTO SE TESTEA YA EN OTRO LADO
   test("createReference rejects when source or target does not exist", () => {
     const a = createObject({ label: "A" });
 

@@ -16,7 +16,6 @@ describe("stepSimulation use case", () => {
     createReference(a.id, b.id);
     createReference(b.id, c.id);
 
-    // Precondition: steps precomputed, currentStep at 0
     const { graph } = useSimulationStore.getState();
     const steps = computeMarkAndSweepSteps(graph);
     useSimulationStore.getState().updateSimulationState({

@@ -16,9 +16,7 @@ export interface ConnectionModeState {
 export interface SimulationStoreState {
   graph: MemoryGraph;
   simulationState: SimulationState;
-  /** UI-only state: button-driven sequential reference creation. */
   connectionMode: ConnectionModeState;
-  /** UI-only state: id of the node currently in inline-edit mode. */
   editingNodeId: string | null;
 }
 

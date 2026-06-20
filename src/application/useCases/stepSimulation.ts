@@ -3,14 +3,6 @@ import { useSimulationStore } from "../simulationStore";
 
 export type StepDirection = "forward" | "backward";
 
-/**
- * Advances or rewinds the simulation by one step over the precomputed
- * step array stored in the simulation state.
- *
- * If no precomputed steps exist and the direction is "forward", the
- * algorithm is invoked once to compute them, then `currentStep` lands
- * on the first step.
- */
 export const stepSimulation = (direction: StepDirection): void => {
   const { graph, simulationState } = useSimulationStore.getState();
 
@@ -44,7 +36,6 @@ export const stepSimulation = (direction: StepDirection): void => {
     return;
   }
 
-  // backward
   if (simulationState.steps.length === 0) return;
   const prev = Math.max(simulationState.currentStep - 1, 0);
   useSimulationStore.setState({

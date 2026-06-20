@@ -24,7 +24,7 @@ describe("scenario serialization", () => {
   test("TC-I-09: exportScenario produces a valid JSON with the full structure", () => {
     const a = createObject({ label: "A", isRoot: true });
     const b = createObject({ label: "B" });
-    createObject({ label: "C" }); // isolated
+    createObject({ label: "C" });
     createReference(a.id, b.id);
 
     const json = exportScenario(scenarioSerializer);
@@ -37,7 +37,6 @@ describe("scenario serialization", () => {
     expect(aRoot).toBeDefined();
     expect(aRoot?.isRoot).toBe(true);
 
-    // Simulation-only fields must NOT be present in the JSON
     for (const o of parsed.objects) {
       expect(o).not.toHaveProperty("marked");
       expect(o).not.toHaveProperty("alive");
@@ -65,7 +64,6 @@ describe("scenario serialization", () => {
     expect(result.imported).toBe(false);
     expect(result.error).toBeDefined();
     expect(result.error?.kind).toBe("validation-error");
-    // Store must not be modified on failure
     expect(useSimulationStore.getState().graph).toEqual(before);
   });
 

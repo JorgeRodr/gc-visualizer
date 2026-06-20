@@ -26,14 +26,6 @@ interface SerializedGraph {
   references: SerializedReference[];
 }
 
-/**
- * JSON serializer for scenarios.
- *
- * Per UI_SPEC §11, the serialized form excludes simulation-only fields
- * (`marked`, `alive`, `visitedOrder`, `traversed`). Optional handle anchors
- * are preserved so user-exported scenarios round-trip with the same visual
- * layout, but absent from the JSON when the reference has no handle set.
- */
 export const scenarioSerializer: IScenarioSerializer = {
   serialize(graph: MemoryGraph): string {
     const minimal: SerializedGraph = {

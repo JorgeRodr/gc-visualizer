@@ -104,17 +104,6 @@ export const computeMarkAndSweepSteps = (
   return steps;
 };
 
-/**
- * Reconstructs a snapshot of the graph at a given step of the simulation.
- *
- * Pure: returns a new graph; does not mutate input.
- *
- * - `marked` is true iff the object id appears in the step's markedIds.
- * - `visitedOrder` is the index in markedIds (DFS visit order) or null.
- * - `alive` is false iff the object was not marked AND the step phase is
- *   'sweep' or 'done'.
- * - `traversed` on each reference reflects the step's traversedReferenceIds.
- */
 export const applyStepsToGraph = (
   graph: MemoryGraph,
   steps: SimulationStep[],

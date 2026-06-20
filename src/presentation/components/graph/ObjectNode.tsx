@@ -1,5 +1,4 @@
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
-// Position is still imported because the source handle declares Position.Bottom.
 import { useEffect, useRef, useState } from "react";
 import { useSimulationStore } from "../../../application/simulationStore";
 import { editObject } from "../../../application/useCases/editObject";
@@ -100,7 +99,6 @@ export function ObjectNode({ id, data, selected }: NodeProps<ObjectNodeType>) {
               e.preventDefault();
               cancelEdit();
             }
-            // Prevent React Flow from intercepting Backspace/Delete during edit
             e.stopPropagation();
           }}
           onMouseDown={(e) => e.stopPropagation()}
@@ -113,12 +111,6 @@ export function ObjectNode({ id, data, selected }: NodeProps<ObjectNodeType>) {
       {!data.alive && (
         <span className="block text-[10px] mt-0.5 italic">Recolectado</span>
       )}
-
-      {/*
-        Side anchors: with ConnectionMode.Loose each handle works as both
-        source and target. The `type` declarations align with the button-mode
-        convention (right=source, left=target) but do not constrain drag.
-      */}
       <Handle
         id="left"
         type="source"
