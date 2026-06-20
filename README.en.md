@@ -15,6 +15,7 @@ A web app to build in-memory object graphs, mark roots and run the Mark & Sweep 
 - [Stack](#stack)
 - [Install](#install)
 - [Usage](#usage)
+- [Docker](#docker)
 - [Available scripts](#available-scripts)
 - [Project structure](#project-structure)
 - [Testing](#testing)
@@ -74,6 +75,26 @@ To produce a production build:
 npm run build
 npm run preview
 ```
+
+## Docker
+
+As an alternative to installing Node locally, you can run the app with Docker. You only need [Docker Desktop](https://www.docker.com/products/docker-desktop/) running; no Node or dependency install required.
+
+From the project root:
+
+```bash
+docker compose up --build
+```
+
+The first run produces the production build and serves it with nginx. Once it finishes, open <http://localhost:8080/> in your browser: it redirects automatically to `/gc-visualizer/` and loads the app.
+
+To stop and clean up the containers:
+
+```bash
+docker compose down
+```
+
+> This is a static production build served by nginx, so there is **no hot reload**. If you change the code, run `docker compose up --build` again. If port `8080` is taken, change the mapping in `docker-compose.yml` (e.g. `"3000:80"`).
 
 ## Available scripts
 

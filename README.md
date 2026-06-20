@@ -15,6 +15,7 @@ Aplicación web que permite construir grafos de objetos en memoria, marcar raíc
 - [Stack](#stack)
 - [Instalación](#instalación)
 - [Uso](#uso)
+- [Docker](#docker)
 - [Scripts disponibles](#scripts-disponibles)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Testing](#testing)
@@ -74,6 +75,26 @@ Para generar la build de producción:
 npm run build
 npm run preview
 ```
+
+## Docker
+
+Como alternativa a la instalación local de Node, puedes levantar la aplicación con Docker. Solo necesitas [Docker Desktop](https://www.docker.com/products/docker-desktop/) en marcha; no hace falta instalar Node ni las dependencias.
+
+Desde la raíz del proyecto:
+
+```bash
+docker compose up --build
+```
+
+La primera ejecución compila la build de producción y la sirve con nginx. Cuando termine, abre <http://localhost:8080/> en el navegador: redirige automáticamente a `/gc-visualizer/` y carga la aplicación.
+
+Para detener y limpiar los contenedores:
+
+```bash
+docker compose down
+```
+
+> Es una build de producción estática servida por nginx, por lo que **no hay recarga en caliente**. Si cambias el código, vuelve a lanzar `docker compose up --build`. Si el puerto `8080` está ocupado, cambia el mapeo en `docker-compose.yml` (por ejemplo `"3000:80"`).
 
 ## Scripts disponibles
 
