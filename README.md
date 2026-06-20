@@ -94,6 +94,14 @@ Para detener y limpiar los contenedores:
 docker compose down
 ```
 
+El flag `--build` solo es necesario la primera vez o cuando cambia algo que va dentro de la imagen (código de `src/`, dependencias, `Dockerfile` o `nginx.conf`):
+
+| Situación                          | Comando                       |
+| ---------------------------------- | ----------------------------- |
+| Primera vez o tras cambiar código  | `docker compose up --build`   |
+| Volver a arrancar sin cambios      | `docker compose up -d`        |
+| Detener y limpiar                  | `docker compose down`         |
+
 > Es una build de producción estática servida por nginx, por lo que **no hay recarga en caliente**. Si cambias el código, vuelve a lanzar `docker compose up --build`. Si el puerto `8080` está ocupado, cambia el mapeo en `docker-compose.yml` (por ejemplo `"3000:80"`).
 
 ## Scripts disponibles
